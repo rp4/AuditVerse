@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Knowledge Graph | Starship Command Center</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@300;400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #000;
+            color: #00ffcc;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Main container */
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            grid-template-rows: 100px 1fr 120px;
+            grid-template-areas:
+                "header header header"
+                "controls graph details"
+                "timeline timeline timeline";
+            gap: 2px;
+            background: #000;
+        }
+
+        /* Header */
+        .header {
+            grid-area: header;
+            background: linear-gradient(135deg, rgba(0,50,100,0.3), rgba(0,20,40,0.3));
+            border: 1px solid rgba(0,255,204,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffcc, transparent);
+            animation: scan 4s linear infinite;
+        }
+
+        @keyframes scan {
+            to { left: 100%; }
+        }
+
+        .title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ffcc, #ff00ff, #00ffcc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #00ffcc;
+        }
+
+        /* Control Panel */
+        .controls {
+            grid-area: controls;
+            background: rgba(0,20,40,0.5);
+            border: 1px solid rgba(0,255,204,0.2);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .control-section {
+            margin-bottom: 25px;
+        }
+
+        .control-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            color: #ff00ff;
+            letter-spacing: 2px;
+        }
+
+        .toggle-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0,255,204,0.05);
+            border: 1px solid rgba(0,255,204,0.2);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-item:hover {
+            background: rgba(0,255,204,0.1);
+            border-color: #00ffcc;
+        }
+
+        .toggle-item.active {
+            background: rgba(0,255,204,0.2);
+            border-color: #00ffcc;
+            box-shadow: 0 0 10px rgba(0,255,204,0.5);
+        }
+
+        .toggle-checkbox {
+            width: 40px;
+            height: 20px;
+            background: rgba(0,255,204,0.2);
+            border-radius: 10px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .toggle-checkbox::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: #00ffcc;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .toggle-item.active .toggle-checkbox {
+            background: rgba(0,255,204,0.5);
+        }
+
+        .toggle-item.active .toggle-checkbox::after {
+            left: 22px;
+        }
+
+        .entity-filter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: rgba(0,255,204,0.05);
+            border: 1px solid rgba(0,255,204,0.2);
+            border-radius: 5px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .entity-filter:hover {
+            background: rgba(0,255,204,0.1);
+        }
+
+        .entity-filter.active {
+            background: rgba(0,255,204,0.2);
+            border-color: #00ffcc;
+        }
+
+        .entity-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slider-control {
+            margin-top: 15px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(0,255,204,0.2);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #00ffcc;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,255,204,0.8);
+        }
+
+        /* Main Graph Area */
+        .graph {
+            grid-area: graph;
+            background: radial-gradient(ellipse at center, rgba(0,20,40,0.3), transparent),
+                        linear-gradient(180deg, #000, rgba(0,10,20,0.8));
+            border: 1px solid rgba(0,255,204,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #knowledge-graph {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Axis labels */
+        .axis-label {
+            position: absolute;
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            opacity: 0.5;
+        }
+
+        .x-axis-label {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .y-axis-label {
+            top: 50%;
+            left: 20px;
+            transform: rotate(-90deg) translateX(-50%);
+            transform-origin: left center;
+        }
+
+        .quadrant-label {
+            position: absolute;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .quadrant-label.high-high {
+            top: 20px;
+            right: 20px;
+            color: #ff0044;
+        }
+
+        .quadrant-label.low-low {
+            bottom: 20px;
+            left: 20px;
+            color: #00ff44;
+        }
+
+        /* Details Panel */
+        .details {
+            grid-area: details;
+            background: rgba(0,20,40,0.5);
+            border: 1px solid rgba(0,255,204,0.2);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .details-empty {
+            text-align: center;
+            margin-top: 50px;
+            opacity: 0.5;
+        }
+
+        .details-content {
+            display: none;
+        }
+
+        .details-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,255,204,0.2);
+        }
+
+        .details-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            color: #00ffcc;
+            margin-bottom: 5px;
+        }
+
+        .details-type {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: rgba(0,255,204,0.05);
+            border: 1px solid rgba(0,255,204,0.2);
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .connections-list {
+            margin-top: 20px;
+        }
+
+        .connection-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: rgba(0,255,204,0.05);
+            border-radius: 5px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .connection-item:hover {
+            background: rgba(0,255,204,0.1);
+        }
+
+        /* Timeline */
+        .timeline {
+            grid-area: timeline;
+            background: rgba(0,20,40,0.5);
+            border: 1px solid rgba(0,255,204,0.2);
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(0,255,204,0.2));
+            border: 1px solid #00ffcc;
+            color: #00ffcc;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 5px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, rgba(0,255,204,0.3), rgba(0,255,204,0.4));
+            box-shadow: 0 0 20px rgba(0,255,204,0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn.active {
+            background: #00ffcc;
+            color: #000;
+        }
+
+        .btn-icon {
+            padding: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .timeline-slider {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timeline-display {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            min-width: 150px;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Graph elements */
+        .risk-node {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .risk-node:hover {
+            filter: brightness(1.5) drop-shadow(0 0 20px currentColor);
+        }
+
+        .risk-node.selected {
+            stroke: #fff;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 30px currentColor);
+        }
+
+        .entity-node {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .entity-node:hover {
+            filter: brightness(1.5) drop-shadow(0 0 15px currentColor);
+        }
+
+        .link {
+            stroke-opacity: 0.6;
+            transition: all 0.3s;
+        }
+
+        .link:hover {
+            stroke-opacity: 1;
+            stroke-width: 3;
+        }
+
+        .link.highlighted {
+            stroke-opacity: 1;
+            stroke-width: 4;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        .link.dimmed {
+            stroke-opacity: 0.1;
+        }
+
+        /* Grid overlay */
+        .grid-line {
+            stroke: rgba(0,255,204,0.1);
+            stroke-dasharray: 5,5;
+        }
+
+        .grid-line.major {
+            stroke: rgba(0,255,204,0.2);
+            stroke-dasharray: none;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0,20,40,0.95);
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            padding: 12px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 300px;
+            box-shadow: 0 0 20px rgba(0,255,204,0.5);
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        /* Pulse animation for nodes */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Risk level indicators */
+        .risk-critical {
+            fill: #ff0044;
+        }
+
+        .risk-high {
+            fill: #ff6600;
+        }
+
+        .risk-medium {
+            fill: #ffaa00;
+        }
+
+        .risk-low {
+            fill: #00ff44;
+        }
+
+        /* Entity type colors */
+        .entity-control {
+            fill: #00ccff;
+            filter: drop-shadow(0 0 5px #00ccff);
+        }
+
+        .entity-audit {
+            fill: #ff00ff;
+            filter: drop-shadow(0 0 5px #ff00ff);
+        }
+
+        .entity-issue {
+            fill: #ffff00;
+            filter: drop-shadow(0 0 5px #ffff00);
+        }
+
+        .entity-incident {
+            fill: #ff0099;
+            filter: drop-shadow(0 0 5px #ff0099);
+        }
+
+        .entity-entity {
+            fill: #00ff99;
+            filter: drop-shadow(0 0 5px #00ff99);
+        }
+
+        /* Orbit paths */
+        .orbit-path {
+            animation: rotate 60s linear infinite;
+            transform-origin: center;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .orbiting-node-group {
+            transition: none;
+        }
+
+        /* Special effects */
+        .warp-effect {
+            animation: warp 3s ease-in-out infinite;
+        }
+
+        @keyframes warp {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.05) rotate(2deg); }
+        }
+
+        /* Loading animation */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 3px solid rgba(0,255,204,0.2);
+            border-top-color: #00ffcc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .container {
+                grid-template-columns: 250px 1fr 300px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 80px auto 1fr 100px;
+                grid-template-areas:
+                    "header"
+                    "controls"
+                    "graph"
+                    "timeline";
+            }
+            
+            .details {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">Risk Knowledge Graph</h1>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Total Risks</div>
+                    <div class="stat-value" id="total-risks">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Critical Zone</div>
+                    <div class="stat-value" id="critical-risks">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Coverage</div>
+                    <div class="stat-value" id="coverage-percent">0%</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Control Panel -->
+        <aside class="controls">
+            <div class="control-section">
+                <h3 class="control-title">Risk View Mode</h3>
+                <div class="toggle-group">
+                    <div class="toggle-item active" data-mode="residual">
+                        <div class="toggle-checkbox"></div>
+                        <span>Residual Risk (With Controls)</span>
+                    </div>
+                    <div class="toggle-item" data-mode="inherent">
+                        <div class="toggle-checkbox"></div>
+                        <span>Inherent Risk (Without Controls)</span>
+                    </div>
+                    <div class="toggle-item" data-mode="transition">
+                        <div class="toggle-checkbox"></div>
+                        <span>Animate Transition</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3 class="control-title">Entity Layers</h3>
+                <div class="entity-filter active" data-entity="controls">
+                    <div class="entity-icon" style="background: #00ccff;">🛡️</div>
+                    <span>Controls</span>
+                </div>
+                <div class="entity-filter active" data-entity="audits">
+                    <div class="entity-icon" style="background: #ff00ff;">🔍</div>
+                    <span>Audits</span>
+                </div>
+                <div class="entity-filter active" data-entity="issues">
+                    <div class="entity-icon" style="background: #ffff00;">⚠️</div>
+                    <span>Issues</span>
+                </div>
+                <div class="entity-filter active" data-entity="incidents">
+                    <div class="entity-icon" style="background: #ff0099;">🚨</div>
+                    <span>Incidents</span>
+                </div>
+                <div class="entity-filter active" data-entity="entities">
+                    <div class="entity-icon" style="background: #00ff99;">🏢</div>
+                    <span>Business Units</span>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3 class="control-title">Visualization</h3>
+                <div class="toggle-group">
+                    <div class="toggle-item active" data-viz="knowledge">
+                        <div class="toggle-checkbox"></div>
+                        <span>Knowledge Graph</span>
+                    </div>
+                    <div class="toggle-item" data-viz="constellation">
+                        <div class="toggle-checkbox"></div>
+                        <span>Risk Constellation</span>
+                    </div>
+                    <div class="toggle-item" data-viz="shield">
+                        <div class="toggle-checkbox"></div>
+                        <span>Control Shield</span>
+                    </div>
+                    <div class="toggle-item" data-viz="pulse">
+                        <div class="toggle-checkbox"></div>
+                        <span>Audit Pulse</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3 class="control-title">Filters</h3>
+                <div class="slider-control">
+                    <div class="slider-label">
+                        <span>Risk Threshold</span>
+                        <span id="threshold-value">5</span>
+                    </div>
+                    <input type="range" class="slider" id="risk-threshold" min="1" max="10" value="5">
+                </div>
+                <div class="slider-control">
+                    <div class="slider-label">
+                        <span>Link Strength</span>
+                        <span id="strength-value">0.5</span>
+                    </div>
+                    <input type="range" class="slider" id="link-strength" min="0" max="1" step="0.1" value="0.5">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Graph Area -->
+        <main class="graph">
+            <svg id="knowledge-graph"></svg>
+            <div class="axis-label x-axis-label">Likelihood →</div>
+            <div class="axis-label y-axis-label">Severity →</div>
+            <div class="quadrant-label high-high">CRITICAL ZONE</div>
+            <div class="quadrant-label low-low">ACCEPTABLE</div>
+        </main>
+
+        <!-- Details Panel -->
+        <aside class="details">
+            <div class="details-empty">
+                <h3>Select a node</h3>
+                <p>Click on any risk or entity to view detailed information</p>
+            </div>
+            <div class="details-content" id="details-content">
+                <div class="details-header">
+                    <h3 class="details-title" id="details-title">Risk Name</h3>
+                    <div class="details-type" id="details-type">Risk</div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Likelihood</div>
+                        <div class="metric-value" id="metric-likelihood">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Severity</div>
+                        <div class="metric-value" id="metric-severity">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Inherent</div>
+                        <div class="metric-value" id="metric-inherent">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Residual</div>
+                        <div class="metric-value" id="metric-residual">0</div>
+                    </div>
+                </div>
+                <div class="connections-list">
+                    <h4 style="margin-bottom: 10px;">Connections</h4>
+                    <div id="connections-list"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Timeline Controls -->
+        <footer class="timeline">
+            <div class="timeline-controls">
+                <button class="btn btn-icon" id="play-btn">▶</button>
+                <button class="btn btn-icon" id="pause-btn">⏸</button>
+                <button class="btn btn-icon" id="reset-btn">⏮</button>
+            </div>
+            <div class="timeline-slider">
+                <input type="range" class="slider" id="timeline-slider" min="0" max="365" value="0" style="flex: 1;">
+                <div class="timeline-display" id="timeline-display">Current</div>
+            </div>
+            <div class="speed-control">
+                <span>Speed:</span>
+                <select id="speed-select" style="background: #000; color: #00ffcc; border: 1px solid #00ffcc; padding: 5px;">
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="2">2x</option>
+                    <option value="5">5x</option>
+                </select>
+            </div>
+            <button class="btn" onclick="exportVisualization()">Export</button>
+            <button class="btn" onclick="toggleFullscreen()">Fullscreen</button>
+        </footer>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Enhanced sample data with likelihood and severity
+        const data = {
+            risks: [
+                { id: 'R001', name: 'Data Breach', entity: 'IT Systems', 
+                  inherent_likelihood: 8, inherent_severity: 9, inherent_rating: 8.5,
+                  residual_likelihood: 5, residual_severity: 9, residual_rating: 7,
+                  owner: 'John Smith', category: 'Cyber', 
+                  trend: 'increasing', last_assessment: '2024-12-01' },
+                
+                { id: 'R002', name: 'Regulatory Non-Compliance', entity: 'Legal',
+                  inherent_likelihood: 7, inherent_severity: 8, inherent_rating: 7.5,
+                  residual_likelihood: 4, residual_severity: 8, residual_rating: 6,
+                  owner: 'Jane Doe', category: 'Compliance',
+                  trend: 'stable', last_assessment: '2024-11-15' },
+                
+                { id: 'R003', name: 'Supply Chain Disruption', entity: 'Operations',
+                  inherent_likelihood: 6, inherent_severity: 7, inherent_rating: 6.5,
+                  residual_likelihood: 6, residual_severity: 7, residual_rating: 6.5,
+                  owner: 'Bob Wilson', category: 'Operational',
+                  trend: 'increasing', last_assessment: '2024-10-20' },
+                
+                { id: 'R004', name: 'Financial Fraud', entity: 'Finance',
+                  inherent_likelihood: 5, inherent_severity: 9, inherent_rating: 7,
+                  residual_likelihood: 2, residual_severity: 9, residual_rating: 5.5,
+                  owner: 'Alice Brown', category: 'Financial',
+                  trend: 'decreasing', last_assessment: '2024-12-10' },
+                
+                { id: 'R005', name: 'System Downtime', entity: 'IT Systems',
+                  inherent_likelihood: 7, inherent_severity: 6, inherent_rating: 6.5,
+                  residual_likelihood: 3, residual_severity: 6, residual_rating: 4.5,
+                  owner: 'Charlie Davis', category: 'Technology',
+                  trend: 'stable', last_assessment: '2024-11-30' },
+                
+                { id: 'R006', name: 'Reputation Damage', entity: 'Marketing',
+                  inherent_likelihood: 5, inherent_severity: 8, inherent_rating: 6.5,
+                  residual_likelihood: 4, residual_severity: 8, residual_rating: 6,
+                  owner: 'Diana Evans', category: 'Strategic',
+                  trend: 'stable', last_assessment: '2024-12-05' },
+                
+                { id: 'R007', name: 'IP Theft', entity: 'R&D',
+                  inherent_likelihood: 6, inherent_severity: 9, inherent_rating: 7.5,
+                  residual_likelihood: 5, residual_severity: 9, residual_rating: 7,
+                  owner: 'Frank Garcia', category: 'Security',
+                  trend: 'increasing', last_assessment: '2024-09-15' },
+                
+                { id: 'R008', name: 'Talent Loss', entity: 'HR',
+                  inherent_likelihood: 7, inherent_severity: 5, inherent_rating: 6,
+                  residual_likelihood: 4, residual_severity: 5, residual_rating: 4.5,
+                  owner: 'Grace Harris', category: 'Human Capital',
+                  trend: 'decreasing', last_assessment: '2024-11-20' }
+            ],
+            
+            controls: [
+                { id: 'C001', name: 'Access Control', type: 'Preventive', effectiveness: 85 },
+                { id: 'C002', name: 'Encryption', type: 'Preventive', effectiveness: 92 },
+                { id: 'C003', name: 'Monitoring', type: 'Detective', effectiveness: 78 },
+                { id: 'C004', name: 'Backup Systems', type: 'Corrective', effectiveness: 95 },
+                { id: 'C005', name: 'Training Program', type: 'Preventive', effectiveness: 70 },
+                { id: 'C006', name: 'Incident Response', type: 'Corrective', effectiveness: 82 },
+                { id: 'C007', name: 'Vendor Management', type: 'Preventive', effectiveness: 65 },
+                { id: 'C008', name: 'Audit Program', type: 'Detective', effectiveness: 88 }
+            ],
+            
+            audits: [
+                { id: 'A001', name: 'IT Security Audit', status: 'Completed', date: '2024-11-01' },
+                { id: 'A002', name: 'Compliance Review', status: 'In Progress', date: '2024-12-15' },
+                { id: 'A003', name: 'Financial Audit', status: 'Planned', date: '2025-01-15' },
+                { id: 'A004', name: 'Operations Assessment', status: 'Completed', date: '2024-10-15' }
+            ],
+            
+            issues: [
+                { id: 'I001', title: 'Weak Passwords', severity: 'High', status: 'Open' },
+                { id: 'I002', title: 'Missing Documentation', severity: 'Medium', status: 'In Progress' },
+                { id: 'I003', title: 'Outdated Software', severity: 'High', status: 'Open' },
+                { id: 'I004', title: 'Training Gaps', severity: 'Low', status: 'Closed' }
+            ],
+            
+            incidents: [
+                { id: 'IN001', description: 'Phishing Attempt', date: '2024-12-20', severity: 'High' },
+                { id: 'IN002', description: 'Service Outage', date: '2024-12-18', severity: 'Medium' },
+                { id: 'IN003', description: 'Data Exposure', date: '2024-12-10', severity: 'Critical' }
+            ],
+            
+            entities: [
+                { id: 'E001', name: 'IT Systems', type: 'Department' },
+                { id: 'E002', name: 'Finance', type: 'Department' },
+                { id: 'E003', name: 'Operations', type: 'Department' },
+                { id: 'E004', name: 'Legal', type: 'Department' },
+                { id: 'E005', name: 'HR', type: 'Department' }
+            ],
+            
+            relationships: [
+                // Risk-Control relationships
+                { source: 'R001', target: 'C001', type: 'mitigates', strength: 0.8 },
+                { source: 'R001', target: 'C002', type: 'mitigates', strength: 0.9 },
+                { source: 'R001', target: 'C003', type: 'mitigates', strength: 0.7 },
+                { source: 'R002', target: 'C008', type: 'mitigates', strength: 0.8 },
+                { source: 'R003', target: 'C007', type: 'mitigates', strength: 0.6 },
+                { source: 'R004', target: 'C003', type: 'mitigates', strength: 0.8 },
+                { source: 'R005', target: 'C004', type: 'mitigates', strength: 0.95 },
+                { source: 'R006', target: 'C005', type: 'mitigates', strength: 0.5 },
+                { source: 'R007', target: 'C001', type: 'mitigates', strength: 0.7 },
+                { source: 'R007', target: 'C002', type: 'mitigates', strength: 0.85 },
+                { source: 'R008', target: 'C005', type: 'mitigates', strength: 0.6 },
+                
+                // Risk-Audit relationships
+                { source: 'R001', target: 'A001', type: 'assessed_by', strength: 0.9 },
+                { source: 'R002', target: 'A002', type: 'assessed_by', strength: 0.8 },
+                { source: 'R003', target: 'A004', type: 'assessed_by', strength: 0.7 },
+                { source: 'R004', target: 'A003', type: 'assessed_by', strength: 0.85 },
+                { source: 'R005', target: 'A001', type: 'assessed_by', strength: 0.8 },
+                
+                // Risk-Issue relationships
+                { source: 'R001', target: 'I001', type: 'causes', strength: 0.9 },
+                { source: 'R001', target: 'I003', type: 'causes', strength: 0.8 },
+                { source: 'R002', target: 'I002', type: 'causes', strength: 0.6 },
+                { source: 'R008', target: 'I004', type: 'causes', strength: 0.5 },
+                
+                // Risk-Incident relationships
+                { source: 'R001', target: 'IN001', type: 'realized_in', strength: 0.9 },
+                { source: 'R001', target: 'IN003', type: 'realized_in', strength: 0.95 },
+                { source: 'R005', target: 'IN002', type: 'realized_in', strength: 0.8 },
+                
+                // Risk-Entity relationships
+                { source: 'R001', target: 'E001', type: 'owned_by', strength: 1.0 },
+                { source: 'R002', target: 'E004', type: 'owned_by', strength: 1.0 },
+                { source: 'R003', target: 'E003', type: 'owned_by', strength: 1.0 },
+                { source: 'R004', target: 'E002', type: 'owned_by', strength: 1.0 },
+                { source: 'R005', target: 'E001', type: 'owned_by', strength: 1.0 },
+                { source: 'R008', target: 'E005', type: 'owned_by', strength: 1.0 }
+            ]
+        };
+
+        // Global variables
+        let svg, g, width, height;
+        let simulation;
+        let currentMode = 'residual';
+        let selectedNode = null;
+        let activeFilters = new Set(['controls', 'audits', 'issues', 'incidents', 'entities']);
+        let animationInterval = null;
+        let timelineValue = 0;
+
+        // Initialize the visualization
+        function init() {
+            const container = document.getElementById('knowledge-graph');
+            const rect = container.getBoundingClientRect();
+            width = rect.width;
+            height = rect.height;
+
+            svg = d3.select('#knowledge-graph')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Add definitions for gradients and filters
+            const defs = svg.append('defs');
+
+            // Add glow filter
+            const filter = defs.append('filter')
+                .attr('id', 'glow');
+            
+            filter.append('feGaussianBlur')
+                .attr('stdDeviation', '3')
+                .attr('result', 'coloredBlur');
+            
+            const feMerge = filter.append('feMerge');
+            feMerge.append('feMergeNode')
+                .attr('in', 'coloredBlur');
+            feMerge.append('feMergeNode')
+                .attr('in', 'SourceGraphic');
+
+            // Create main group
+            g = svg.append('g');
+
+            // Add zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.5, 3])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoom);
+
+            // Draw grid
+            drawGrid();
+
+            // Initialize visualization
+            updateVisualization();
+
+            // Update stats
+            updateStats();
+        }
+
+        // Draw background grid
+        function drawGrid() {
+            const gridGroup = g.append('g').attr('class', 'grid');
+
+            // Vertical lines
+            for (let i = 0; i <= 10; i++) {
+                gridGroup.append('line')
+                    .attr('class', i === 5 ? 'grid-line major' : 'grid-line')
+                    .attr('x1', (width / 10) * i)
+                    .attr('y1', 0)
+                    .attr('x2', (width / 10) * i)
+                    .attr('y2', height);
+            }
+
+            // Horizontal lines
+            for (let i = 0; i <= 10; i++) {
+                gridGroup.append('line')
+                    .attr('class', i === 5 ? 'grid-line major' : 'grid-line')
+                    .attr('x1', 0)
+                    .attr('y1', (height / 10) * i)
+                    .attr('x2', width)
+                    .attr('y2', (height / 10) * i);
+            }
+        }
+
+        // Update visualization based on current settings
+        function updateVisualization() {
+            // Clear previous elements
+            g.selectAll('.links').remove();
+            g.selectAll('.nodes').remove();
+            g.selectAll('.orbits').remove();
+
+            // Get current risk positions
+            const riskNodes = data.risks.map(r => ({
+                ...r,
+                x: currentMode === 'inherent' ? 
+                    (r.inherent_likelihood / 10) * width : 
+                    (r.residual_likelihood / 10) * width,
+                y: height - (currentMode === 'inherent' ? 
+                    (r.inherent_severity / 10) * height : 
+                    (r.residual_severity / 10) * height),
+                type: 'risk',
+                radius: Math.sqrt((currentMode === 'inherent' ? r.inherent_rating : r.residual_rating) * 100)
+            }));
+
+            // Create risk lookup for orbiting entities
+            const riskById = new Map(riskNodes.map(r => [r.id, r]));
+
+            // Prepare other nodes
+            const otherNodes = [];
+            const allNodes = [...riskNodes];
+            const orbitingNodes = [];
+
+            // Add controls - these will orbit around their risks
+            if (activeFilters.has('controls')) {
+                data.controls.forEach((c, i) => {
+                    // Find which risk this control relates to
+                    const relationship = data.relationships.find(r => 
+                        r.target === c.id && r.type === 'mitigates'
+                    );
+                    
+                    if (relationship && riskById.has(relationship.source)) {
+                        const risk = riskById.get(relationship.source);
+                        const angle = (i * Math.PI / 3) % (Math.PI * 2);
+                        const orbitRadius = 40;
+                        const node = {
+                            ...c,
+                            type: 'control',
+                            parentRisk: risk.id,
+                            orbitRadius: orbitRadius,
+                            angle: angle,
+                            x: risk.x + Math.cos(angle) * orbitRadius,
+                            y: risk.y + Math.sin(angle) * orbitRadius,
+                            radius: 12
+                        };
+                        orbitingNodes.push(node);
+                        allNodes.push(node);
+                    } else {
+                        // Orphan controls - place them in a corner
+                        const node = {
+                            ...c,
+                            type: 'control',
+                            x: 50 + (i % 3) * 30,
+                            y: height - 100 + Math.floor(i / 3) * 30,
+                            radius: 12
+                        };
+                        otherNodes.push(node);
+                        allNodes.push(node);
+                    }
+                });
+            }
+
+            // Add audits - positioned along the top axis
+            if (activeFilters.has('audits')) {
+                data.audits.forEach((a, i) => {
+                    const node = {
+                        ...a,
+                        type: 'audit',
+                        x: (width / (data.audits.length + 1)) * (i + 1),
+                        y: 40,
+                        radius: 15
+                    };
+                    otherNodes.push(node);
+                    allNodes.push(node);
+                });
+            }
+
+            // Add issues - these will orbit around their risks
+            if (activeFilters.has('issues')) {
+                data.issues.forEach((issue, i) => {
+                    // Find which risk this issue relates to
+                    const relationship = data.relationships.find(r => 
+                        r.target === issue.id && r.type === 'causes'
+                    );
+                    
+                    if (relationship && riskById.has(relationship.source)) {
+                        const risk = riskById.get(relationship.source);
+                        const angle = (Math.PI / 2) + (i * Math.PI / 2) % (Math.PI * 2);
+                        const orbitRadius = 55;
+                        const node = {
+                            ...issue,
+                            type: 'issue',
+                            parentRisk: risk.id,
+                            orbitRadius: orbitRadius,
+                            angle: angle,
+                            x: risk.x + Math.cos(angle) * orbitRadius,
+                            y: risk.y + Math.sin(angle) * orbitRadius,
+                            radius: 10
+                        };
+                        orbitingNodes.push(node);
+                        allNodes.push(node);
+                    } else {
+                        // Unlinked issues
+                        const node = {
+                            ...issue,
+                            type: 'issue',
+                            x: 50 + (i % 2) * 30,
+                            y: height - 50 + Math.floor(i / 2) * 30,
+                            radius: 10
+                        };
+                        otherNodes.push(node);
+                        allNodes.push(node);
+                    }
+                });
+            }
+
+            // Add incidents - these will orbit around their risks
+            if (activeFilters.has('incidents')) {
+                data.incidents.forEach((inc, i) => {
+                    // Find which risk this incident relates to
+                    const relationship = data.relationships.find(r => 
+                        r.target === inc.id && r.type === 'realized_in'
+                    );
+                    
+                    if (relationship && riskById.has(relationship.source)) {
+                        const risk = riskById.get(relationship.source);
+                        const angle = Math.PI + (i * Math.PI / 3) % (Math.PI * 2);
+                        const orbitRadius = 70;
+                        const node = {
+                            ...inc,
+                            type: 'incident',
+                            parentRisk: risk.id,
+                            orbitRadius: orbitRadius,
+                            angle: angle,
+                            x: risk.x + Math.cos(angle) * orbitRadius,
+                            y: risk.y + Math.sin(angle) * orbitRadius,
+                            radius: 11
+                        };
+                        orbitingNodes.push(node);
+                        allNodes.push(node);
+                    } else {
+                        // Unlinked incidents
+                        const node = {
+                            ...inc,
+                            type: 'incident',
+                            x: width - 50 - i * 30,
+                            y: height - 50,
+                            radius: 11
+                        };
+                        otherNodes.push(node);
+                        allNodes.push(node);
+                    }
+                });
+            }
+
+            // Add entities - positioned along the right axis
+            if (activeFilters.has('entities')) {
+                data.entities.forEach((e, i) => {
+                    const node = {
+                        ...e,
+                        type: 'entity',
+                        x: width - 40,
+                        y: (height / (data.entities.length + 1)) * (i + 1),
+                        radius: 18
+                    };
+                    otherNodes.push(node);
+                    allNodes.push(node);
+                });
+            }
+
+            // Create node lookup
+            const nodeById = new Map(allNodes.map(n => [n.id, n]));
+
+            // Filter and prepare links
+            const links = data.relationships
+                .filter(r => nodeById.has(r.source) && nodeById.has(r.target))
+                .map(r => ({
+                    ...r,
+                    source: nodeById.get(r.source),
+                    target: nodeById.get(r.target)
+                }));
+
+            // Draw orbit paths for risks with orbiting entities
+            const orbitGroup = g.append('g').attr('class', 'orbits');
+            
+            riskNodes.forEach(risk => {
+                const hasOrbiters = orbitingNodes.some(n => n.parentRisk === risk.id);
+                if (hasOrbiters) {
+                    // Draw orbit circles
+                    [40, 55, 70].forEach(radius => {
+                        orbitGroup.append('circle')
+                            .attr('cx', risk.x)
+                            .attr('cy', risk.y)
+                            .attr('r', radius)
+                            .attr('fill', 'none')
+                            .attr('stroke', 'rgba(0,255,204,0.1)')
+                            .attr('stroke-dasharray', '2,4')
+                            .attr('class', 'orbit-path');
+                    });
+                }
+            });
+
+            // Create force simulation for non-orbiting nodes only
+            simulation = d3.forceSimulation([...otherNodes])
+                .force('link', d3.forceLink(links.filter(l => 
+                    !l.source.parentRisk && !l.target.parentRisk &&
+                    l.source.type !== 'risk' && l.target.type !== 'risk'))
+                    .id(d => d.id)
+                    .distance(50))
+                .force('charge', d3.forceManyBody().strength(-50))
+                .force('collision', d3.forceCollide().radius(d => d.radius + 5));
+
+            // Draw links
+            const linkGroup = g.append('g').attr('class', 'links');
+            
+            const link = linkGroup.selectAll('.link')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('class', 'link')
+                .attr('stroke', d => {
+                    if (d.type === 'mitigates') return '#00ccff';
+                    if (d.type === 'assessed_by') return '#ff00ff';
+                    if (d.type === 'causes') return '#ffff00';
+                    if (d.type === 'realized_in') return '#ff0099';
+                    if (d.type === 'owned_by') return '#00ff99';
+                    return '#00ffcc';
+                })
+                .attr('stroke-width', d => d.strength * 3)
+                .attr('stroke-opacity', 0.6)
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `${d.type}: ${d.strength.toFixed(2)}`);
+                    d3.select(this).classed('highlighted', true);
+                })
+                .on('mouseout', function() {
+                    hideTooltip();
+                    d3.select(this).classed('highlighted', false);
+                });
+
+            // Draw nodes
+            const nodeGroup = g.append('g').attr('class', 'nodes');
+
+            // Risk nodes
+            const riskNodeGroup = nodeGroup.selectAll('.risk-node')
+                .data(riskNodes)
+                .enter()
+                .append('g')
+                .attr('class', 'risk-node-group')
+                .attr('transform', d => `translate(${d.x},${d.y})`);
+
+            riskNodeGroup.append('circle')
+                .attr('class', d => `risk-node ${getRiskClass(currentMode === 'inherent' ? d.inherent_rating : d.residual_rating)}`)
+                .attr('r', d => d.radius)
+                .attr('fill-opacity', 0.8)
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2)
+                .attr('stroke-opacity', 0)
+                .on('click', (event, d) => selectNode(d))
+                .on('mouseover', function(event, d) {
+                    const rating = currentMode === 'inherent' ? d.inherent_rating : d.residual_rating;
+                    showTooltip(event, 
+                        `${d.name}<br>
+                        Likelihood: ${currentMode === 'inherent' ? d.inherent_likelihood : d.residual_likelihood}<br>
+                        Severity: ${currentMode === 'inherent' ? d.inherent_severity : d.residual_severity}<br>
+                        Rating: ${rating}`);
+                    d3.select(this).attr('stroke-opacity', 1);
+                })
+                .on('mouseout', function() {
+                    hideTooltip();
+                    if (!d3.select(this.parentNode).classed('selected')) {
+                        d3.select(this).attr('stroke-opacity', 0);
+                    }
+                });
+
+            // Add trend indicators
+            riskNodeGroup.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', -5)
+                .attr('font-size', '20px')
+                .text(d => {
+                    if (d.trend === 'increasing') return '↑';
+                    if (d.trend === 'decreasing') return '↓';
+                    return '→';
+                })
+                .attr('fill', d => {
+                    if (d.trend === 'increasing') return '#ff0044';
+                    if (d.trend === 'decreasing') return '#00ff44';
+                    return '#ffaa00';
+                });
+
+            // Add risk labels
+            riskNodeGroup.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', 5)
+                .attr('font-size', '12px')
+                .attr('fill', '#fff')
+                .text(d => d.name.substring(0, 15));
+
+            // Other entity nodes (non-orbiting)
+            const entityNodes = nodeGroup.selectAll('.entity-node')
+                .data(otherNodes)
+                .enter()
+                .append('g')
+                .attr('class', 'entity-node-group')
+                .attr('transform', d => `translate(${d.x},${d.y})`);
+
+            entityNodes.append('circle')
+                .attr('class', d => `entity-node entity-${d.type}`)
+                .attr('r', d => d.radius)
+                .attr('fill-opacity', 0.8)
+                .on('click', (event, d) => selectNode(d))
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `${d.name || d.title || d.description}<br>Type: ${d.type}`);
+                })
+                .on('mouseout', hideTooltip);
+
+            // Add icons for entity types
+            entityNodes.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle')
+                .attr('font-size', '14px')
+                .text(d => {
+                    if (d.type === 'control') return '🛡️';
+                    if (d.type === 'audit') return '🔍';
+                    if (d.type === 'issue') return '⚠️';
+                    if (d.type === 'incident') return '🚨';
+                    if (d.type === 'entity') return '🏢';
+                    return '';
+                });
+
+            // Orbiting entity nodes
+            const orbitingNodeGroups = nodeGroup.selectAll('.orbiting-node')
+                .data(orbitingNodes)
+                .enter()
+                .append('g')
+                .attr('class', 'orbiting-node-group')
+                .attr('transform', d => `translate(${d.x},${d.y})`);
+
+            orbitingNodeGroups.append('circle')
+                .attr('class', d => `entity-node entity-${d.type}`)
+                .attr('r', d => d.radius)
+                .attr('fill-opacity', 0.8)
+                .on('click', (event, d) => selectNode(d))
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `${d.name || d.title || d.description}<br>Type: ${d.type}<br>Orbiting: ${d.parentRisk}`);
+                })
+                .on('mouseout', hideTooltip);
+
+            orbitingNodeGroups.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle')
+                .attr('font-size', '12px')
+                .text(d => {
+                    if (d.type === 'control') return '🛡️';
+                    if (d.type === 'issue') return '⚠️';
+                    if (d.type === 'incident') return '🚨';
+                    return '';
+                });
+
+            // Start orbit animation
+            function animateOrbits() {
+                orbitingNodes.forEach(node => {
+                    node.angle += 0.01; // Rotation speed
+                    if (node.angle > Math.PI * 2) node.angle -= Math.PI * 2;
+                    
+                    const risk = riskById.get(node.parentRisk);
+                    if (risk) {
+                        node.x = risk.x + Math.cos(node.angle) * node.orbitRadius;
+                        node.y = risk.y + Math.sin(node.angle) * node.orbitRadius;
+                    }
+                });
+
+                orbitingNodeGroups
+                    .attr('transform', d => `translate(${d.x},${d.y})`);
+
+                // Update orbit paths if risks move
+                orbitGroup.selectAll('.orbit-path')
+                    .attr('cx', function(d, i) {
+                        const riskIndex = Math.floor(i / 3);
+                        return riskNodes[riskIndex] ? riskNodes[riskIndex].x : 0;
+                    })
+                    .attr('cy', function(d, i) {
+                        const riskIndex = Math.floor(i / 3);
+                        return riskNodes[riskIndex] ? riskNodes[riskIndex].y : 0;
+                    });
+
+                // Update links connected to orbiting nodes
+                link
+                    .attr('x1', d => {
+                        if (d.source.parentRisk) {
+                            return d.source.x;
+                        }
+                        return d.source.type === 'risk' ? 
+                            (currentMode === 'inherent' ? 
+                                (d.source.inherent_likelihood / 10) * width : 
+                                (d.source.residual_likelihood / 10) * width) : 
+                            d.source.x;
+                    })
+                    .attr('y1', d => {
+                        if (d.source.parentRisk) {
+                            return d.source.y;
+                        }
+                        return d.source.type === 'risk' ? 
+                            height - (currentMode === 'inherent' ? 
+                                (d.source.inherent_severity / 10) * height : 
+                                (d.source.residual_severity / 10) * height) : 
+                            d.source.y;
+                    })
+                    .attr('x2', d => {
+                        if (d.target.parentRisk) {
+                            return d.target.x;
+                        }
+                        return d.target.type === 'risk' ? 
+                            (currentMode === 'inherent' ? 
+                                (d.target.inherent_likelihood / 10) * width : 
+                                (d.target.residual_likelihood / 10) * width) : 
+                            d.target.x;
+                    })
+                    .attr('y2', d => {
+                        if (d.target.parentRisk) {
+                            return d.target.y;
+                        }
+                        return d.target.type === 'risk' ? 
+                            height - (currentMode === 'inherent' ? 
+                                (d.target.inherent_severity / 10) * height : 
+                                (d.target.residual_severity / 10) * height) : 
+                            d.target.y;
+                    });
+
+                requestAnimationFrame(animateOrbits);
+            }
+
+            // Start the orbit animation
+            animateOrbits();
+
+            // Update positions on simulation tick for non-orbiting nodes
+            simulation.on('tick', () => {
+                entityNodes
+                    .attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        // Get risk class based on rating
+        function getRiskClass(rating) {
+            if (rating >= 8) return 'risk-critical';
+            if (rating >= 6) return 'risk-high';
+            if (rating >= 4) return 'risk-medium';
+            return 'risk-low';
+        }
+
+        // Animate transition between inherent and residual
+        function animateTransition() {
+            const duration = 2000;
+            
+            // Update risk nodes in the data
+            const targetMode = currentMode === 'inherent' ? 'residual' : 'inherent';
+            
+            // Animate risk positions
+            g.selectAll('.risk-node-group')
+                .transition()
+                .duration(duration)
+                .attr('transform', d => {
+                    const x = targetMode === 'inherent' ? 
+                        (d.inherent_likelihood / 10) * width : 
+                        (d.residual_likelihood / 10) * width;
+                    const y = height - (targetMode === 'inherent' ? 
+                        (d.inherent_severity / 10) * height : 
+                        (d.residual_severity / 10) * height);
+                    
+                    // Update the risk position in data for orbiting nodes
+                    d.x = x;
+                    d.y = y;
+                    
+                    return `translate(${x},${y})`;
+                });
+
+            // Animate risk sizes and colors
+            g.selectAll('.risk-node')
+                .transition()
+                .duration(duration)
+                .attr('r', d => {
+                    const rating = targetMode === 'inherent' ? d.inherent_rating : d.residual_rating;
+                    return Math.sqrt(rating * 100);
+                })
+                .attr('class', d => {
+                    const rating = targetMode === 'inherent' ? d.inherent_rating : d.residual_rating;
+                    return `risk-node ${getRiskClass(rating)}`;
+                });
+
+            // Animate orbit paths
+            g.selectAll('.orbit-path')
+                .transition()
+                .duration(duration)
+                .attr('cx', function(d, i) {
+                    const riskIndex = Math.floor(i / 3);
+                    const risk = data.risks[riskIndex];
+                    if (risk) {
+                        return targetMode === 'inherent' ? 
+                            (risk.inherent_likelihood / 10) * width : 
+                            (risk.residual_likelihood / 10) * width;
+                    }
+                    return 0;
+                })
+                .attr('cy', function(d, i) {
+                    const riskIndex = Math.floor(i / 3);
+                    const risk = data.risks[riskIndex];
+                    if (risk) {
+                        return height - (targetMode === 'inherent' ? 
+                            (risk.inherent_severity / 10) * height : 
+                            (risk.residual_severity / 10) * height);
+                    }
+                    return 0;
+                });
+
+            currentMode = targetMode;
+            
+            // After animation, refresh to ensure orbiting nodes are correctly positioned
+            setTimeout(() => {
+                updateVisualization();
+            }, duration);
+        }
+
+        // Timeline animation
+        function startTimelineAnimation() {
+            if (animationInterval) return;
+            
+            const speed = parseFloat(document.getElementById('speed-select').value);
+            
+            animationInterval = setInterval(() => {
+                timelineValue += 1;
+                if (timelineValue > 365) {
+                    timelineValue = 0;
+                }
+                
+                document.getElementById('timeline-slider').value = timelineValue;
+                updateTimelineDisplay();
+                
+                // Animate nodes based on timeline
+                animateNodesOverTime();
+            }, 100 / speed);
+        }
+
+        function pauseTimelineAnimation() {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function resetTimeline() {
+            pauseTimelineAnimation();
+            timelineValue = 0;
+            document.getElementById('timeline-slider').value = 0;
+            updateTimelineDisplay();
+            updateVisualization();
+        }
+
+        function updateTimelineDisplay() {
+            const date = new Date();
+            date.setDate(date.getDate() - (365 - timelineValue));
+            const display = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('timeline-display').textContent = display;
+        }
+
+        function animateNodesOverTime() {
+            // Simulate risk evolution over time
+            const progress = timelineValue / 365;
+            
+            g.selectAll('.risk-node')
+                .attr('fill-opacity', d => {
+                    // Newer assessments are more visible
+                    const assessmentDate = new Date(d.last_assessment);
+                    const daysSince = Math.floor((Date.now() - assessmentDate) / (1000 * 60 * 60 * 24));
+                    const ageProgress = 1 - (daysSince / 365);
+                    return 0.3 + (ageProgress * 0.7);
+                });
+            
+            // Pulse effect for recent incidents
+            if (timelineValue % 10 === 0) {
+                g.selectAll('.entity-incident')
+                    .classed('pulse', true);
+                
+                setTimeout(() => {
+                    g.selectAll('.entity-incident')
+                        .classed('pulse', false);
+                }, 1000);
+            }
+        }
+
+        // Select and show node details
+        function selectNode(node) {
+            // Update selection state
+            g.selectAll('.risk-node-group').classed('selected', false);
+            g.selectAll('.entity-node-group').classed('selected', false);
+            g.selectAll('.risk-node').attr('stroke-opacity', 0);
+            
+            if (node.type === 'risk') {
+                g.selectAll('.risk-node-group')
+                    .filter(d => d.id === node.id)
+                    .classed('selected', true)
+                    .select('.risk-node')
+                    .attr('stroke-opacity', 1);
+            } else {
+                g.selectAll('.entity-node-group')
+                    .filter(d => d.id === node.id)
+                    .classed('selected', true);
+            }
+            
+            selectedNode = node;
+            showNodeDetails(node);
+            highlightConnections(node);
+        }
+
+        // Show node details in panel
+        function showNodeDetails(node) {
+            document.querySelector('.details-empty').style.display = 'none';
+            document.getElementById('details-content').style.display = 'block';
+            
+            document.getElementById('details-title').textContent = node.name || node.title || node.description || 'Unknown';
+            document.getElementById('details-type').textContent = node.type.charAt(0).toUpperCase() + node.type.slice(1);
+            
+            if (node.type === 'risk') {
+                const likelihood = currentMode === 'inherent' ? node.inherent_likelihood : node.residual_likelihood;
+                const severity = currentMode === 'inherent' ? node.inherent_severity : node.residual_severity;
+                
+                document.getElementById('metric-likelihood').textContent = likelihood;
+                document.getElementById('metric-severity').textContent = severity;
+                document.getElementById('metric-inherent').textContent = node.inherent_rating;
+                document.getElementById('metric-residual').textContent = node.residual_rating;
+                
+                document.querySelector('.metrics-grid').style.display = 'grid';
+            } else {
+                document.querySelector('.metrics-grid').style.display = 'none';
+            }
+            
+            // Show connections
+            const connections = data.relationships.filter(r => 
+                r.source === node.id || r.target === node.id
+            );
+            
+            const connectionsList = document.getElementById('connections-list');
+            connectionsList.innerHTML = '';
+            
+            connections.forEach(conn => {
+                const otherNodeId = conn.source === node.id ? conn.target : conn.source;
+                const otherNode = [...data.risks, ...data.controls, ...data.audits, ...data.issues, ...data.incidents, ...data.entities]
+                    .find(n => n.id === otherNodeId);
+                
+                if (otherNode) {
+                    const item = document.createElement('div');
+                    item.className = 'connection-item';
+                    item.innerHTML = `
+                        <span style="color: ${getEntityColor(otherNode)};">●</span>
+                        <span>${otherNode.name || otherNode.title || otherNode.description}</span>
+                        <span style="opacity: 0.5; font-size: 0.8rem;">${conn.type}</span>
+                    `;
+                    item.onclick = () => {
+                        const fullNode = [...data.risks, ...data.controls, ...data.audits, ...data.issues, ...data.incidents, ...data.entities]
+                            .find(n => n.id === otherNodeId);
+                        selectNode(fullNode);
+                    };
+                    connectionsList.appendChild(item);
+                }
+            });
+        }
+
+        function getEntityColor(node) {
+            if (node.id.startsWith('R')) return '#ff6600';
+            if (node.id.startsWith('C')) return '#00ccff';
+            if (node.id.startsWith('A')) return '#ff00ff';
+            if (node.id.startsWith('I')) return '#ffff00';
+            if (node.id.startsWith('IN')) return '#ff0099';
+            if (node.id.startsWith('E')) return '#00ff99';
+            return '#00ffcc';
+        }
+
+        // Highlight connections for selected node
+        function highlightConnections(node) {
+            const connectedIds = new Set();
+            
+            data.relationships.forEach(r => {
+                if (r.source === node.id) connectedIds.add(r.target);
+                if (r.target === node.id) connectedIds.add(r.source);
+            });
+            
+            g.selectAll('.link')
+                .classed('highlighted', d => 
+                    (d.source.id === node.id || d.target.id === node.id))
+                .classed('dimmed', d => 
+                    !(d.source.id === node.id || d.target.id === node.id));
+            
+            g.selectAll('.risk-node')
+                .style('opacity', d => 
+                    d.id === node.id || connectedIds.has(d.id) ? 1 : 0.3);
+            
+            g.selectAll('.entity-node')
+                .style('opacity', d => 
+                    d.id === node.id || connectedIds.has(d.id) ? 1 : 0.3);
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('total-risks').textContent = data.risks.length;
+            
+            const criticalRisks = data.risks.filter(r => {
+                const rating = currentMode === 'inherent' ? r.inherent_rating : r.residual_rating;
+                return rating >= 8;
+            }).length;
+            document.getElementById('critical-risks').textContent = criticalRisks;
+            
+            const risksWithControls = data.relationships.filter(r => 
+                r.type === 'mitigates' && r.source.startsWith('R')
+            ).map(r => r.source);
+            const uniqueRisksWithControls = new Set(risksWithControls);
+            const coverage = (uniqueRisksWithControls.size / data.risks.length * 100).toFixed(0);
+            document.getElementById('coverage-percent').textContent = coverage + '%';
+        }
+
+        // Tooltip functions
+        function showTooltip(event, content) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = content;
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY - 30 + 'px';
+            tooltip.classList.add('show');
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').classList.remove('show');
+        }
+
+        // Event listeners
+        document.querySelectorAll('.toggle-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const mode = this.dataset.mode;
+                
+                if (mode === 'transition') {
+                    animateTransition();
+                    return;
+                }
+                
+                document.querySelectorAll('.toggle-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                currentMode = mode;
+                updateVisualization();
+                updateStats();
+            });
+        });
+
+        document.querySelectorAll('.entity-filter').forEach(filter => {
+            filter.addEventListener('click', function() {
+                const entity = this.dataset.entity;
+                
+                if (activeFilters.has(entity)) {
+                    activeFilters.delete(entity);
+                    this.classList.remove('active');
+                } else {
+                    activeFilters.add(entity);
+                    this.classList.add('active');
+                }
+                
+                updateVisualization();
+            });
+        });
+
+        document.getElementById('risk-threshold').addEventListener('input', function() {
+            document.getElementById('threshold-value').textContent = this.value;
+            // Filter nodes based on threshold
+            const threshold = parseFloat(this.value);
+            
+            g.selectAll('.risk-node')
+                .style('display', d => {
+                    const rating = currentMode === 'inherent' ? d.inherent_rating : d.residual_rating;
+                    return rating >= threshold ? 'block' : 'none';
+                });
+        });
+
+        document.getElementById('link-strength').addEventListener('input', function() {
+            document.getElementById('strength-value').textContent = this.value;
+            const minStrength = parseFloat(this.value);
+            
+            g.selectAll('.link')
+                .style('display', d => d.strength >= minStrength ? 'block' : 'none');
+        });
+
+        document.getElementById('play-btn').addEventListener('click', startTimelineAnimation);
+        document.getElementById('pause-btn').addEventListener('click', pauseTimelineAnimation);
+        document.getElementById('reset-btn').addEventListener('click', resetTimeline);
+
+        document.getElementById('timeline-slider').addEventListener('input', function() {
+            timelineValue = parseInt(this.value);
+            updateTimelineDisplay();
+            animateNodesOverTime();
+        });
+
+        // Export function
+        function exportVisualization() {
+            const svgData = new XMLSerializer().serializeToString(svg.node());
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+            
+            const downloadLink = document.createElement('a');
+            downloadLink.href = svgUrl;
+            downloadLink.download = 'risk-knowledge-graph.svg';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // Fullscreen toggle
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('knowledge-graph');
+            const rect = container.getBoundingClientRect();
+            width = rect.width;
+            height = rect.height;
+            
+            svg.attr('width', width).attr('height', height);
+            updateVisualization();
+        });
+
+        // Initialize on load
+        window.addEventListener('load', init);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (animationInterval) {
+                    pauseTimelineAnimation();
+                } else {
+                    startTimelineAnimation();
+                }
+            }
+            if (e.key === 'r') {
+                resetTimeline();
+            }
+            if (e.key === 'i') {
+                document.querySelector('[data-mode="inherent"]').click();
+            }
+            if (e.key === 's') {
+                document.querySelector('[data-mode="residual"]').click();
+            }
+            if (e.key === 't') {
+                document.querySelector('[data-mode="transition"]').click();
+            }
+        });
+    </script>
+</body>
+</html>

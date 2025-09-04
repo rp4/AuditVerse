@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starship Audit Control | Risk Assessment Command Center</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Exo+2:wght@300;400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background: #000;
+            color: #00ffcc;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Animated starfield background */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            grid-template-rows: 80px 1fr 100px;
+            grid-template-areas:
+                "nav header"
+                "nav main"
+                "nav footer";
+            gap: 2px;
+            padding: 2px;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /* Navigation Panel */
+        .nav-panel {
+            grid-area: nav;
+            background: linear-gradient(180deg, rgba(0,20,40,0.9), rgba(0,10,20,0.9));
+            border: 1px solid rgba(0,255,204,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 20px;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, rgba(0,255,204,0.1), transparent);
+            border: 2px solid rgba(0,255,204,0.3);
+            border-radius: 10px;
+            color: #00ffcc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+
+        .nav-btn:hover {
+            background: radial-gradient(circle, rgba(0,255,204,0.3), transparent);
+            border-color: #00ffcc;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0,255,204,0.5);
+        }
+
+        .nav-btn.active {
+            background: radial-gradient(circle, rgba(0,255,204,0.5), rgba(0,255,204,0.1));
+            border-color: #00ffcc;
+            box-shadow: 0 0 30px rgba(0,255,204,0.8), inset 0 0 20px rgba(0,255,204,0.3);
+        }
+
+        /* Header */
+        .header {
+            grid-area: header;
+            background: linear-gradient(90deg, rgba(0,20,40,0.9), rgba(0,40,80,0.9), rgba(0,20,40,0.9));
+            border: 1px solid rgba(0,255,204,0.3);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,204,0.2), transparent);
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            to { left: 100%; }
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ffcc, #0099ff, #00ffcc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-right: auto;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px 15px;
+            background: rgba(0,255,204,0.05);
+            border: 1px solid rgba(0,255,204,0.2);
+            border-radius: 5px;
+        }
+
+        .status-label {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+
+        .status-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #00ffcc;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            grid-area: main;
+            background: rgba(0,10,20,0.9);
+            border: 1px solid rgba(0,255,204,0.3);
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 2px;
+            padding: 2px;
+        }
+
+        .panel {
+            background: linear-gradient(135deg, rgba(0,20,40,0.9), rgba(0,10,20,0.9));
+            border: 1px solid rgba(0,255,204,0.2);
+            border-radius: 5px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffcc, transparent);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0,255,204,0.1);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #00ffcc;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(0,255,204,0.3), transparent);
+            border-radius: 50%;
+        }
+
+        .panel-content {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+        }
+
+        /* Visualization styles */
+        .risk-matrix {
+            width: 100%;
+            height: 100%;
+            min-height: 200px;
+        }
+
+        .heatmap-cell {
+            stroke: rgba(0,255,204,0.3);
+            stroke-width: 1;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .heatmap-cell:hover {
+            stroke: #00ffcc;
+            stroke-width: 2;
+            filter: brightness(1.3);
+        }
+
+        .risk-node {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .risk-node:hover {
+            filter: brightness(1.5) drop-shadow(0 0 20px currentColor);
+        }
+
+        .control-arc {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .control-arc:hover {
+            filter: brightness(1.3);
+            stroke: #00ffcc;
+            stroke-width: 2;
+        }
+
+        /* Large panels */
+        .panel-large {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+
+        .panel-wide {
+            grid-column: span 2;
+        }
+
+        .panel-tall {
+            grid-row: span 2;
+        }
+
+        .panel-full {
+            grid-column: span 4;
+        }
+
+        /* Footer Control Panel */
+        .footer {
+            grid-area: footer;
+            background: linear-gradient(180deg, rgba(0,20,40,0.9), rgba(0,10,20,0.9));
+            border: 1px solid rgba(0,255,204,0.3);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            gap: 30px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .control-slider {
+            width: 150px;
+            height: 4px;
+            background: rgba(0,255,204,0.2);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00ffcc;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,255,204,0.8);
+        }
+
+        .control-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(0,255,204,0.2));
+            border: 1px solid rgba(0,255,204,0.5);
+            border-radius: 5px;
+            color: #00ffcc;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: linear-gradient(135deg, rgba(0,255,204,0.3), rgba(0,255,204,0.4));
+            border-color: #00ffcc;
+            box-shadow: 0 0 20px rgba(0,255,204,0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Alert styles */
+        .alert-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: alert-pulse 1s ease-in-out infinite;
+        }
+
+        .alert-high {
+            background: #ff0044;
+            box-shadow: 0 0 10px #ff0044;
+        }
+
+        .alert-medium {
+            background: #ffaa00;
+            box-shadow: 0 0 10px #ffaa00;
+        }
+
+        .alert-low {
+            background: #00ff44;
+            box-shadow: 0 0 10px #00ff44;
+        }
+
+        @keyframes alert-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0,20,40,0.95);
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 300px;
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        /* Modal overlay for detailed views */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            width: 90%;
+            height: 90%;
+            background: linear-gradient(135deg, rgba(0,20,40,0.95), rgba(0,10,20,0.95));
+            border: 2px solid #00ffcc;
+            border-radius: 10px;
+            padding: 30px;
+            position: relative;
+            overflow: auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,0,68,0.2);
+            border: 2px solid #ff0044;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #ff0044;
+            font-size: 24px;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,0,68,0.4);
+            transform: scale(1.1);
+        }
+
+        /* Loading animation */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(0,255,204,0.2);
+            border-top-color: #00ffcc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Data table styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,255,204,0.2);
+        }
+
+        .data-table th {
+            background: rgba(0,255,204,0.1);
+            font-family: 'Orbitron', monospace;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #00ffcc;
+        }
+
+        .data-table tr:hover {
+            background: rgba(0,255,204,0.05);
+        }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-high {
+            background: rgba(255,0,68,0.2);
+            color: #ff0044;
+            border: 1px solid #ff0044;
+        }
+
+        .severity-medium {
+            background: rgba(255,170,0,0.2);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+        }
+
+        .severity-low {
+            background: rgba(0,255,68,0.2);
+            color: #00ff44;
+            border: 1px solid #00ff44;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1400px) {
+            .main-content {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Starfield Background -->
+    <canvas id="starfield"></canvas>
+
+    <div class="container">
+        <!-- Navigation Panel -->
+        <nav class="nav-panel">
+            <div class="nav-btn active" data-view="dashboard" title="Main Dashboard">
+                <span>🎯</span>
+            </div>
+            <div class="nav-btn" data-view="risks" title="Risk Analysis">
+                <span>⚠️</span>
+            </div>
+            <div class="nav-btn" data-view="controls" title="Control Coverage">
+                <span>🛡️</span>
+            </div>
+            <div class="nav-btn" data-view="audits" title="Audit Planning">
+                <span>🔍</span>
+            </div>
+            <div class="nav-btn" data-view="issues" title="Issues & Incidents">
+                <span>📋</span>
+            </div>
+            <div class="nav-btn" data-view="entities" title="Entity Scorecards">
+                <span>🏢</span>
+            </div>
+        </nav>
+
+        <!-- Header -->
+        <header class="header">
+            <h1>Starship Audit Control</h1>
+            <div class="status-indicators">
+                <div class="status-item">
+                    <span class="status-label">System Status</span>
+                    <span class="status-value" id="system-status">ONLINE</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Risk Level</span>
+                    <span class="status-value" id="risk-level">MODERATE</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Active Alerts</span>
+                    <span class="status-value" id="alert-count">12</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Stardate</span>
+                    <span class="status-value" id="stardate">2398.047</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="main-content">
+            <!-- Dynamic panels will be inserted here -->
+        </main>
+
+        <!-- Footer Control Panel -->
+        <footer class="footer">
+            <div class="control-group">
+                <span class="control-label">Time Range</span>
+                <input type="range" class="control-slider" id="time-range" min="1" max="365" value="30">
+                <span id="time-display">30 days</span>
+            </div>
+            <div class="control-group">
+                <span class="control-label">Risk Threshold</span>
+                <input type="range" class="control-slider" id="risk-threshold" min="1" max="10" value="7">
+                <span id="threshold-display">7.0</span>
+            </div>
+            <button class="control-btn" onclick="refreshData()">Refresh Data</button>
+            <button class="control-btn" onclick="exportReport()">Export Report</button>
+            <button class="control-btn" onclick="toggleFullscreen()">Full Screen</button>
+        </footer>
+    </div>
+
+    <!-- Modal for detailed views -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal()">&times;</div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Sample data structures
+        const sampleData = {
+            risks: [
+                { id: 'R001', name: 'Data Breach', entity: 'IT Systems', inherent_rating: 9, residual_rating: 6, owner: 'John Smith', has_controls: true, open_issues: 3, last_audit: '2024-10-15', incidents_30d: 2 },
+                { id: 'R002', name: 'Regulatory Non-Compliance', entity: 'Legal', inherent_rating: 8, residual_rating: 5, owner: 'Jane Doe', has_controls: true, open_issues: 1, last_audit: '2024-11-20', incidents_30d: 0 },
+                { id: 'R003', name: 'Supply Chain Disruption', entity: 'Operations', inherent_rating: 7, residual_rating: 7, owner: 'Bob Wilson', has_controls: false, open_issues: 5, last_audit: '2023-08-10', incidents_30d: 4 },
+                { id: 'R004', name: 'Financial Fraud', entity: 'Finance', inherent_rating: 8, residual_rating: 4, owner: 'Alice Brown', has_controls: true, open_issues: 0, last_audit: '2024-12-01', incidents_30d: 1 },
+                { id: 'R005', name: 'System Downtime', entity: 'IT Systems', inherent_rating: 6, residual_rating: 3, owner: 'Charlie Davis', has_controls: true, open_issues: 2, last_audit: '2024-09-30', incidents_30d: 3 },
+                { id: 'R006', name: 'Employee Safety', entity: 'HR', inherent_rating: 7, residual_rating: 4, owner: 'Diana Evans', has_controls: true, open_issues: 1, last_audit: '2024-07-15', incidents_30d: 0 },
+                { id: 'R007', name: 'Intellectual Property Theft', entity: 'R&D', inherent_rating: 9, residual_rating: 8, owner: 'Frank Garcia', has_controls: false, open_issues: 4, last_audit: '2022-12-01', incidents_30d: 1 },
+                { id: 'R008', name: 'Market Volatility', entity: 'Finance', inherent_rating: 5, residual_rating: 5, owner: 'Grace Harris', has_controls: true, open_issues: 0, last_audit: '2024-10-30', incidents_30d: 0 }
+            ],
+            controls: [
+                { id: 'C001', name: 'Access Control', risk_id: 'R001', entity: 'IT Systems', effectiveness: 85, last_tested: '2024-11-01', issues: 1, incidents: 0 },
+                { id: 'C002', name: 'Data Encryption', risk_id: 'R001', entity: 'IT Systems', effectiveness: 92, last_tested: '2024-10-15', issues: 0, incidents: 0 },
+                { id: 'C003', name: 'Compliance Monitoring', risk_id: 'R002', entity: 'Legal', effectiveness: 78, last_tested: '2024-09-20', issues: 2, incidents: 1 },
+                { id: 'C004', name: 'Vendor Assessment', risk_id: 'R003', entity: 'Operations', effectiveness: 65, last_tested: '2024-08-10', issues: 3, incidents: 2 },
+                { id: 'C005', name: 'Transaction Monitoring', risk_id: 'R004', entity: 'Finance', effectiveness: 88, last_tested: '2024-11-15', issues: 0, incidents: 0 },
+                { id: 'C006', name: 'Backup Systems', risk_id: 'R005', entity: 'IT Systems', effectiveness: 95, last_tested: '2024-10-30', issues: 0, incidents: 1 },
+                { id: 'C007', name: 'Safety Training', risk_id: 'R006', entity: 'HR', effectiveness: 82, last_tested: '2024-07-01', issues: 1, incidents: 0 },
+                { id: 'C008', name: 'Orphan Control 1', risk_id: null, entity: 'Legal', effectiveness: 70, last_tested: '2024-06-01', issues: 0, incidents: 0 },
+                { id: 'C009', name: 'Orphan Control 2', risk_id: null, entity: 'Operations', effectiveness: 60, last_tested: '2024-05-15', issues: 1, incidents: 0 }
+            ],
+            audits: [
+                { id: 'A001', name: 'Q4 IT Security Audit', entity: 'IT Systems', planned_date: '2025-01-15', actual_date: null, risks_covered: ['R001', 'R005'], controls_tested: ['C001', 'C002', 'C006'], issues_found: 0, effort_hours: 120 },
+                { id: 'A002', name: 'Annual Compliance Review', entity: 'Legal', planned_date: '2025-02-01', actual_date: null, risks_covered: ['R002'], controls_tested: ['C003'], issues_found: 0, effort_hours: 80 },
+                { id: 'A003', name: 'Supply Chain Audit', entity: 'Operations', planned_date: '2024-12-15', actual_date: '2024-12-10', risks_covered: ['R003'], controls_tested: ['C004'], issues_found: 5, effort_hours: 160 },
+                { id: 'A004', name: 'Financial Controls Review', entity: 'Finance', planned_date: '2025-03-01', actual_date: null, risks_covered: ['R004'], controls_tested: ['C005'], issues_found: 0, effort_hours: 100 },
+                { id: 'A005', name: 'HR Process Audit', entity: 'HR', planned_date: '2025-01-30', actual_date: null, risks_covered: ['R006'], controls_tested: ['C007'], issues_found: 0, effort_hours: 60 }
+            ],
+            entities: [
+                { id: 'E001', name: 'IT Systems', risk_count: 2, control_count: 3, last_audit: '2024-10-15', open_issues: 5, incidents_ytd: 6, residual_exposure: 9 },
+                { id: 'E002', name: 'Legal', risk_count: 1, control_count: 2, last_audit: '2024-11-20', open_issues: 1, incidents_ytd: 1, residual_exposure: 5 },
+                { id: 'E003', name: 'Operations', risk_count: 1, control_count: 2, last_audit: '2023-08-10', open_issues: 5, incidents_ytd: 6, residual_exposure: 7 },
+                { id: 'E004', name: 'Finance', risk_count: 2, control_count: 1, last_audit: '2024-12-01', open_issues: 0, incidents_ytd: 1, residual_exposure: 9 },
+                { id: 'E005', name: 'HR', risk_count: 1, control_count: 1, last_audit: '2024-07-15', open_issues: 1, incidents_ytd: 0, residual_exposure: 4 },
+                { id: 'E006', name: 'R&D', risk_count: 1, control_count: 0, last_audit: '2022-12-01', open_issues: 4, incidents_ytd: 1, residual_exposure: 8 }
+            ],
+            issues: [
+                { id: 'I001', title: 'Weak Password Policy', risk_id: 'R001', entity: 'IT Systems', severity: 'high', owner: 'John Smith', due_date: '2025-01-15', status: 'open', days_overdue: 0 },
+                { id: 'I002', name: 'Missing Documentation', risk_id: 'R002', entity: 'Legal', severity: 'medium', owner: 'Jane Doe', due_date: '2024-12-20', status: 'open', days_overdue: 15 },
+                { id: 'I003', title: 'Vendor Contract Gaps', risk_id: 'R003', entity: 'Operations', severity: 'high', owner: 'Bob Wilson', due_date: '2024-11-30', status: 'open', days_overdue: 35 },
+                { id: 'I004', title: 'Outdated Firewall Rules', risk_id: 'R001', entity: 'IT Systems', severity: 'high', owner: 'John Smith', due_date: '2025-01-30', status: 'open', days_overdue: 0 },
+                { id: 'I005', title: 'Training Records Incomplete', risk_id: 'R006', entity: 'HR', severity: 'low', owner: 'Diana Evans', due_date: '2025-02-15', status: 'open', days_overdue: 0 }
+            ],
+            incidents: [
+                { id: 'IN001', description: 'Unauthorized access attempt', risk_id: 'R001', entity: 'IT Systems', severity: 'high', occurred_at: '2024-12-20', status: 'resolved' },
+                { id: 'IN002', description: 'Supply delivery delay', risk_id: 'R003', entity: 'Operations', severity: 'medium', occurred_at: '2024-12-18', status: 'open' },
+                { id: 'IN003', description: 'System outage - 2 hours', risk_id: 'R005', entity: 'IT Systems', severity: 'high', occurred_at: '2024-12-15', status: 'resolved' },
+                { id: 'IN004', description: 'Compliance warning received', risk_id: 'R002', entity: 'Legal', severity: 'medium', occurred_at: '2024-12-10', status: 'investigating' },
+                { id: 'IN005', description: 'Suspicious transaction detected', risk_id: 'R004', entity: 'Finance', severity: 'high', occurred_at: '2024-12-05', status: 'resolved' }
+            ]
+        };
+
+        // Initialize starfield animation
+        function initStarfield() {
+            const canvas = document.getElementById('starfield');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const stars = [];
+            const numStars = 200;
+            
+            for (let i = 0; i < numStars; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    z: Math.random() * 1000,
+                    size: Math.random() * 2
+                });
+            }
+            
+            function animate() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#00ffcc';
+                stars.forEach(star => {
+                    star.z -= 2;
+                    
+                    if (star.z <= 0) {
+                        star.x = Math.random() * canvas.width;
+                        star.y = Math.random() * canvas.height;
+                        star.z = 1000;
+                    }
+                    
+                    const x = (star.x - canvas.width / 2) * (1000 / star.z) + canvas.width / 2;
+                    const y = (star.y - canvas.height / 2) * (1000 / star.z) + canvas.height / 2;
+                    const size = (1 - star.z / 1000) * star.size;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+
+        // Dashboard view panels
+        function renderDashboard() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="panel panel-large" id="risk-matrix-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">⚠️</div>
+                            Risk Matrix Heatmap
+                        </div>
+                        <div class="alert-indicator alert-high"></div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="risk-matrix" class="risk-matrix"></div>
+                    </div>
+                </div>
+                
+                <div class="panel panel-tall" id="control-coverage-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">🛡️</div>
+                            Control Coverage
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="control-coverage"></div>
+                    </div>
+                </div>
+                
+                <div class="panel" id="top-risks-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">📊</div>
+                            Top Risks
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="top-risks"></div>
+                    </div>
+                </div>
+                
+                <div class="panel" id="audit-coverage-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">🔍</div>
+                            Audit Coverage
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="audit-coverage"></div>
+                    </div>
+                </div>
+                
+                <div class="panel panel-wide" id="incidents-timeline-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">📈</div>
+                            Incidents Timeline
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="incidents-timeline"></div>
+                    </div>
+                </div>
+                
+                <div class="panel" id="overdue-issues-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">⏰</div>
+                            Overdue Issues
+                        </div>
+                        <div class="alert-indicator alert-medium"></div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="overdue-issues"></div>
+                    </div>
+                </div>
+                
+                <div class="panel" id="entity-scores-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">🏢</div>
+                            Entity Scores
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="entity-scores"></div>
+                    </div>
+                </div>
+            `;
+            
+            // Render all visualizations
+            renderRiskMatrix();
+            renderControlCoverage();
+            renderTopRisks();
+            renderAuditCoverage();
+            renderIncidentsTimeline();
+            renderOverdueIssues();
+            renderEntityScores();
+        }
+
+        // Risk Matrix Heatmap
+        function renderRiskMatrix() {
+            const container = d3.select('#risk-matrix');
+            container.selectAll('*').remove();
+            
+            const width = container.node().getBoundingClientRect().width;
+            const height = container.node().getBoundingClientRect().height;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const margin = { top: 30, right: 30, bottom: 40, left: 50 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // Group risks by entity
+            const entities = [...new Set(sampleData.risks.map(r => r.entity))];
+            const riskLevels = ['Low', 'Medium', 'High', 'Critical'];
+            
+            const xScale = d3.scaleBand()
+                .domain(entities)
+                .range([0, innerWidth])
+                .padding(0.05);
+            
+            const yScale = d3.scaleBand()
+                .domain(riskLevels)
+                .range([innerHeight, 0])
+                .padding(0.05);
+            
+            // Create heatmap cells
+            const cells = [];
+            entities.forEach(entity => {
+                riskLevels.forEach(level => {
+                    const risks = sampleData.risks.filter(r => {
+                        if (r.entity !== entity) return false;
+                        const rating = r.residual_rating;
+                        if (level === 'Low' && rating <= 3) return true;
+                        if (level === 'Medium' && rating > 3 && rating <= 5) return true;
+                        if (level === 'High' && rating > 5 && rating <= 7) return true;
+                        if (level === 'Critical' && rating > 7) return true;
+                        return false;
+                    });
+                    cells.push({
+                        entity,
+                        level,
+                        count: risks.length,
+                        risks
+                    });
+                });
+            });
+            
+            const colorScale = d3.scaleSequential()
+                .domain([0, d3.max(cells, d => d.count)])
+                .interpolator(d3.interpolateRgb('rgba(0,255,204,0.1)', '#ff0044'));
+            
+            g.selectAll('.heatmap-cell')
+                .data(cells)
+                .enter()
+                .append('rect')
+                .attr('class', 'heatmap-cell')
+                .attr('x', d => xScale(d.entity))
+                .attr('y', d => yScale(d.level))
+                .attr('width', xScale.bandwidth())
+                .attr('height', yScale.bandwidth())
+                .attr('fill', d => d.count === 0 ? 'rgba(0,255,204,0.05)' : colorScale(d.count))
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `${d.entity} - ${d.level}<br>Risks: ${d.count}`);
+                })
+                .on('mouseout', hideTooltip)
+                .on('click', function(event, d) {
+                    if (d.count > 0) {
+                        showRiskDetails(d.risks);
+                    }
+                });
+            
+            // Add text labels
+            g.selectAll('.cell-label')
+                .data(cells.filter(c => c.count > 0))
+                .enter()
+                .append('text')
+                .attr('x', d => xScale(d.entity) + xScale.bandwidth() / 2)
+                .attr('y', d => yScale(d.level) + yScale.bandwidth() / 2)
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle')
+                .attr('fill', '#fff')
+                .attr('font-size', '14px')
+                .attr('font-weight', '600')
+                .attr('pointer-events', 'none')
+                .text(d => d.count);
+            
+            // X axis
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(d3.axisBottom(xScale))
+                .selectAll('text')
+                .style('fill', '#00ffcc')
+                .style('font-size', '10px');
+            
+            // Y axis
+            g.append('g')
+                .call(d3.axisLeft(yScale))
+                .selectAll('text')
+                .style('fill', '#00ffcc')
+                .style('font-size', '10px');
+            
+            // Style axis lines
+            g.selectAll('.domain, .tick line')
+                .style('stroke', 'rgba(0,255,204,0.3)');
+        }
+
+        // Control Coverage Donut Chart
+        function renderControlCoverage() {
+            const container = d3.select('#control-coverage');
+            container.selectAll('*').remove();
+            
+            const width = container.node().getBoundingClientRect().width;
+            const height = container.node().getBoundingClientRect().height;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const radius = Math.min(width, height) / 2 - 20;
+            const g = svg.append('g')
+                .attr('transform', `translate(${width/2},${height/2})`);
+            
+            // Calculate coverage by entity
+            const entities = sampleData.entities.map(e => {
+                const risks = sampleData.risks.filter(r => r.entity === e.name);
+                const risksWithControls = risks.filter(r => r.has_controls).length;
+                return {
+                    name: e.name,
+                    coverage: risks.length > 0 ? (risksWithControls / risks.length * 100) : 0
+                };
+            });
+            
+            const pie = d3.pie()
+                .value(d => d.coverage)
+                .sort(null);
+            
+            const arc = d3.arc()
+                .innerRadius(radius * 0.6)
+                .outerRadius(radius);
+            
+            const colors = d3.scaleOrdinal()
+                .domain(entities.map(e => e.name))
+                .range(['#00ffcc', '#00ff44', '#ffaa00', '#ff0044', '#0099ff', '#ff00ff']);
+            
+            const arcs = g.selectAll('.control-arc')
+                .data(pie(entities))
+                .enter()
+                .append('g')
+                .attr('class', 'arc-group');
+            
+            arcs.append('path')
+                .attr('class', 'control-arc')
+                .attr('d', arc)
+                .attr('fill', d => colors(d.data.name))
+                .attr('fill-opacity', 0.8)
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `${d.data.name}<br>Coverage: ${d.data.coverage.toFixed(1)}%`);
+                })
+                .on('mouseout', hideTooltip);
+            
+            // Add labels
+            arcs.append('text')
+                .attr('transform', d => `translate(${arc.centroid(d)})`)
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#fff')
+                .attr('font-size', '10px')
+                .text(d => d.data.coverage > 0 ? `${d.data.coverage.toFixed(0)}%` : '');
+            
+            // Center text
+            g.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle')
+                .attr('font-size', '16px')
+                .attr('fill', '#00ffcc')
+                .attr('font-family', 'Orbitron, monospace')
+                .text('COVERAGE');
+        }
+
+        // Top Risks Bar Chart
+        function renderTopRisks() {
+            const container = d3.select('#top-risks');
+            container.selectAll('*').remove();
+            
+            const topRisks = sampleData.risks
+                .sort((a, b) => b.residual_rating - a.residual_rating)
+                .slice(0, 5);
+            
+            const width = container.node().getBoundingClientRect().width;
+            const height = container.node().getBoundingClientRect().height;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const margin = { top: 10, right: 10, bottom: 10, left: 10 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            const xScale = d3.scaleLinear()
+                .domain([0, 10])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleBand()
+                .domain(topRisks.map(r => r.name))
+                .range([0, innerHeight])
+                .padding(0.2);
+            
+            g.selectAll('.risk-bar')
+                .data(topRisks)
+                .enter()
+                .append('rect')
+                .attr('class', 'risk-bar')
+                .attr('x', 0)
+                .attr('y', d => yScale(d.name))
+                .attr('width', d => xScale(d.residual_rating))
+                .attr('height', yScale.bandwidth())
+                .attr('fill', d => {
+                    if (d.residual_rating > 7) return '#ff0044';
+                    if (d.residual_rating > 5) return '#ffaa00';
+                    return '#00ff44';
+                })
+                .attr('fill-opacity', 0.8)
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `${d.name}<br>Rating: ${d.residual_rating}/10<br>Owner: ${d.owner}`);
+                })
+                .on('mouseout', hideTooltip);
+            
+            // Add risk names
+            g.selectAll('.risk-label')
+                .data(topRisks)
+                .enter()
+                .append('text')
+                .attr('x', 5)
+                .attr('y', d => yScale(d.name) + yScale.bandwidth() / 2)
+                .attr('dominant-baseline', 'middle')
+                .attr('fill', '#fff')
+                .attr('font-size', '10px')
+                .text(d => d.name.substring(0, 20) + (d.name.length > 20 ? '...' : ''));
+        }
+
+        // Audit Coverage Gauge
+        function renderAuditCoverage() {
+            const container = d3.select('#audit-coverage');
+            container.selectAll('*').remove();
+            
+            const width = container.node().getBoundingClientRect().width;
+            const height = container.node().getBoundingClientRect().height;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const centerX = width / 2;
+            const centerY = height / 2 + 20;
+            const radius = Math.min(width, height) / 2 - 30;
+            
+            // Calculate coverage percentage
+            const totalRisks = sampleData.risks.length;
+            const auditedRecently = sampleData.risks.filter(r => {
+                const lastAudit = new Date(r.last_audit);
+                const monthsAgo = (Date.now() - lastAudit) / (1000 * 60 * 60 * 24 * 30);
+                return monthsAgo <= 12;
+            }).length;
+            const coverage = (auditedRecently / totalRisks) * 100;
+            
+            // Create gauge arc
+            const arcGenerator = d3.arc()
+                .innerRadius(radius * 0.7)
+                .outerRadius(radius)
+                .startAngle(-Math.PI / 2)
+                .endAngle(Math.PI / 2);
+            
+            // Background arc
+            svg.append('path')
+                .attr('d', arcGenerator())
+                .attr('transform', `translate(${centerX},${centerY})`)
+                .attr('fill', 'rgba(0,255,204,0.1)');
+            
+            // Coverage arc
+            const coverageArc = d3.arc()
+                .innerRadius(radius * 0.7)
+                .outerRadius(radius)
+                .startAngle(-Math.PI / 2)
+                .endAngle(-Math.PI / 2 + (Math.PI * coverage / 100));
+            
+            svg.append('path')
+                .attr('d', coverageArc())
+                .attr('transform', `translate(${centerX},${centerY})`)
+                .attr('fill', coverage > 70 ? '#00ff44' : coverage > 40 ? '#ffaa00' : '#ff0044');
+            
+            // Center text
+            svg.append('text')
+                .attr('x', centerX)
+                .attr('y', centerY)
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle')
+                .attr('font-size', '24px')
+                .attr('fill', '#00ffcc')
+                .attr('font-family', 'Orbitron, monospace')
+                .text(`${coverage.toFixed(0)}%`);
+            
+            svg.append('text')
+                .attr('x', centerX)
+                .attr('y', centerY + 30)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '10px')
+                .attr('fill', '#00ffcc')
+                .attr('opacity', 0.7)
+                .text('Last 12 Months');
+        }
+
+        // Incidents Timeline
+        function renderIncidentsTimeline() {
+            const container = d3.select('#incidents-timeline');
+            container.selectAll('*').remove();
+            
+            const width = container.node().getBoundingClientRect().width;
+            const height = container.node().getBoundingClientRect().height;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // Parse dates and group by day
+            const incidents = sampleData.incidents.map(i => ({
+                ...i,
+                date: new Date(i.occurred_at)
+            }));
+            
+            const dailyCounts = d3.rollup(
+                incidents,
+                v => v.length,
+                d => d3.timeDay(d.date)
+            );
+            
+            const data = Array.from(dailyCounts, ([date, count]) => ({ date, count }));
+            
+            const xScale = d3.scaleTime()
+                .domain(d3.extent(data, d => d.date))
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.count)])
+                .range([innerHeight, 0]);
+            
+            // Create area generator
+            const area = d3.area()
+                .x(d => xScale(d.date))
+                .y0(innerHeight)
+                .y1(d => yScale(d.count))
+                .curve(d3.curveMonotoneX);
+            
+            // Add gradient
+            const gradient = svg.append('defs')
+                .append('linearGradient')
+                .attr('id', 'incident-gradient')
+                .attr('x1', '0%')
+                .attr('y1', '0%')
+                .attr('x2', '0%')
+                .attr('y2', '100%');
+            
+            gradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', '#ff0044')
+                .attr('stop-opacity', 0.8);
+            
+            gradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', '#ff0044')
+                .attr('stop-opacity', 0.1);
+            
+            // Draw area
+            g.append('path')
+                .datum(data)
+                .attr('fill', 'url(#incident-gradient)')
+                .attr('d', area);
+            
+            // Add line
+            const line = d3.line()
+                .x(d => xScale(d.date))
+                .y(d => yScale(d.count))
+                .curve(d3.curveMonotoneX);
+            
+            g.append('path')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', '#ff0044')
+                .attr('stroke-width', 2)
+                .attr('d', line);
+            
+            // Add dots
+            g.selectAll('.incident-dot')
+                .data(data)
+                .enter()
+                .append('circle')
+                .attr('class', 'incident-dot')
+                .attr('cx', d => xScale(d.date))
+                .attr('cy', d => yScale(d.count))
+                .attr('r', 4)
+                .attr('fill', '#ff0044')
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `Date: ${d.date.toLocaleDateString()}<br>Incidents: ${d.count}`);
+                })
+                .on('mouseout', hideTooltip);
+            
+            // X axis
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat('%b %d')))
+                .selectAll('text')
+                .style('fill', '#00ffcc')
+                .style('font-size', '9px');
+            
+            // Y axis
+            g.append('g')
+                .call(d3.axisLeft(yScale).ticks(5))
+                .selectAll('text')
+                .style('fill', '#00ffcc')
+                .style('font-size', '9px');
+            
+            // Style axis lines
+            g.selectAll('.domain, .tick line')
+                .style('stroke', 'rgba(0,255,204,0.3)');
+        }
+
+        // Overdue Issues List
+        function renderOverdueIssues() {
+            const container = d3.select('#overdue-issues');
+            container.selectAll('*').remove();
+            
+            const overdueIssues = sampleData.issues
+                .filter(i => i.days_overdue > 0)
+                .sort((a, b) => b.days_overdue - a.days_overdue);
+            
+            const table = container.append('table')
+                .attr('class', 'data-table');
+            
+            const thead = table.append('thead');
+            thead.append('tr')
+                .selectAll('th')
+                .data(['Issue', 'Owner', 'Days Overdue'])
+                .enter()
+                .append('th')
+                .text(d => d);
+            
+            const tbody = table.append('tbody');
+            const rows = tbody.selectAll('tr')
+                .data(overdueIssues)
+                .enter()
+                .append('tr');
+            
+            rows.append('td')
+                .text(d => d.title ? d.title.substring(0, 25) + '...' : 'N/A');
+            
+            rows.append('td')
+                .text(d => d.owner);
+            
+            rows.append('td')
+                .append('span')
+                .attr('class', d => `severity-badge severity-${d.days_overdue > 30 ? 'high' : d.days_overdue > 14 ? 'medium' : 'low'}`)
+                .text(d => d.days_overdue);
+        }
+
+        // Entity Scores Radar Chart
+        function renderEntityScores() {
+            const container = d3.select('#entity-scores');
+            container.selectAll('*').remove();
+            
+            const width = container.node().getBoundingClientRect().width;
+            const height = container.node().getBoundingClientRect().height;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2 - 30;
+            
+            const entities = sampleData.entities;
+            const angleSlice = Math.PI * 2 / entities.length;
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${centerX},${centerY})`);
+            
+            // Draw grid circles
+            const levels = 5;
+            for (let level = 1; level <= levels; level++) {
+                g.append('circle')
+                    .attr('r', radius * level / levels)
+                    .attr('fill', 'none')
+                    .attr('stroke', 'rgba(0,255,204,0.1)')
+                    .attr('stroke-width', 1);
+            }
+            
+            // Draw axis lines
+            entities.forEach((e, i) => {
+                const angle = angleSlice * i - Math.PI / 2;
+                g.append('line')
+                    .attr('x1', 0)
+                    .attr('y1', 0)
+                    .attr('x2', Math.cos(angle) * radius)
+                    .attr('y2', Math.sin(angle) * radius)
+                    .attr('stroke', 'rgba(0,255,204,0.1)')
+                    .attr('stroke-width', 1);
+                
+                // Add labels
+                const labelX = Math.cos(angle) * (radius + 20);
+                const labelY = Math.sin(angle) * (radius + 20);
+                
+                g.append('text')
+                    .attr('x', labelX)
+                    .attr('y', labelY)
+                    .attr('text-anchor', 'middle')
+                    .attr('dominant-baseline', 'middle')
+                    .attr('font-size', '10px')
+                    .attr('fill', '#00ffcc')
+                    .text(e.name);
+            });
+            
+            // Create radar area
+            const radarLine = d3.lineRadial()
+                .angle((d, i) => angleSlice * i)
+                .radius(d => (d.residual_exposure / 10) * radius)
+                .curve(d3.curveLinearClosed);
+            
+            g.append('path')
+                .datum(entities)
+                .attr('d', radarLine)
+                .attr('fill', 'rgba(0,255,204,0.2)')
+                .attr('stroke', '#00ffcc')
+                .attr('stroke-width', 2);
+            
+            // Add dots
+            entities.forEach((e, i) => {
+                const angle = angleSlice * i - Math.PI / 2;
+                const r = (e.residual_exposure / 10) * radius;
+                
+                g.append('circle')
+                    .attr('cx', Math.cos(angle) * r)
+                    .attr('cy', Math.sin(angle) * r)
+                    .attr('r', 5)
+                    .attr('fill', '#00ffcc')
+                    .on('mouseover', function(event) {
+                        showTooltip(event, `${e.name}<br>Exposure: ${e.residual_exposure}/10`);
+                    })
+                    .on('mouseout', hideTooltip);
+            });
+        }
+
+        // Tooltip functions
+        function showTooltip(event, content) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = content;
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY - 30 + 'px';
+            tooltip.classList.add('show');
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.classList.remove('show');
+        }
+
+        // Modal functions
+        function showRiskDetails(risks) {
+            const modal = document.getElementById('modal');
+            const modalBody = document.getElementById('modal-body');
+            
+            let html = '<h2 style="color: #00ffcc; font-family: Orbitron, monospace;">Risk Details</h2>';
+            html += '<table class="data-table" style="margin-top: 20px;">';
+            html += '<thead><tr><th>Risk</th><th>Entity</th><th>Owner</th><th>Inherent</th><th>Residual</th><th>Open Issues</th></tr></thead>';
+            html += '<tbody>';
+            
+            risks.forEach(r => {
+                html += '<tr>';
+                html += `<td>${r.name}</td>`;
+                html += `<td>${r.entity}</td>`;
+                html += `<td>${r.owner}</td>`;
+                html += `<td><span class="severity-badge severity-${r.inherent_rating > 7 ? 'high' : r.inherent_rating > 5 ? 'medium' : 'low'}">${r.inherent_rating}</span></td>`;
+                html += `<td><span class="severity-badge severity-${r.residual_rating > 7 ? 'high' : r.residual_rating > 5 ? 'medium' : 'low'}">${r.residual_rating}</span></td>`;
+                html += `<td>${r.open_issues}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            
+            modalBody.innerHTML = html;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const view = this.dataset.view;
+                if (view === 'dashboard') {
+                    renderDashboard();
+                } else {
+                    renderDetailedView(view);
+                }
+            });
+        });
+
+        // Render detailed views
+        function renderDetailedView(view) {
+            const mainContent = document.getElementById('main-content');
+            
+            switch(view) {
+                case 'risks':
+                    renderRisksView();
+                    break;
+                case 'controls':
+                    renderControlsView();
+                    break;
+                case 'audits':
+                    renderAuditsView();
+                    break;
+                case 'issues':
+                    renderIssuesView();
+                    break;
+                case 'entities':
+                    renderEntitiesView();
+                    break;
+            }
+        }
+
+        // Risk Intelligence View
+        function renderRisksView() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="panel panel-full" style="grid-row: span 3;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">⚠️</div>
+                            Strategy & Risk Intelligence
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 100%;">
+                            <div>
+                                <h3 style="color: #00ffcc; margin-bottom: 15px;">Top Risks by Rating</h3>
+                                <div id="risk-rating-chart" style="height: 300px;"></div>
+                                
+                                <h3 style="color: #00ffcc; margin: 20px 0 15px;">Risks Without Controls</h3>
+                                <div id="control-gaps" style="height: 200px;"></div>
+                            </div>
+                            <div>
+                                <h3 style="color: #00ffcc; margin-bottom: 15px;">Risk Incidents Correlation</h3>
+                                <div id="risk-incidents" style="height: 300px;"></div>
+                                
+                                <h3 style="color: #00ffcc; margin: 20px 0 15px;">Audit Coverage Gaps</h3>
+                                <div id="audit-gaps" style="height: 200px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Render detailed risk charts
+            renderRiskRatingChart();
+            renderControlGaps();
+            renderRiskIncidents();
+            renderAuditGaps();
+        }
+
+        function renderRiskRatingChart() {
+            const container = d3.select('#risk-rating-chart');
+            const width = container.node().getBoundingClientRect().width;
+            const height = 300;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const data = sampleData.risks.map(r => ({
+                name: r.name,
+                inherent: r.inherent_rating,
+                residual: r.residual_rating,
+                entity: r.entity
+            }));
+            
+            const margin = { top: 20, right: 30, bottom: 40, left: 120 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            const xScale = d3.scaleLinear()
+                .domain([0, 10])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleBand()
+                .domain(data.map(d => d.name))
+                .range([0, innerHeight])
+                .padding(0.3);
+            
+            // Inherent risk bars
+            g.selectAll('.inherent-bar')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('x', 0)
+                .attr('y', d => yScale(d.name))
+                .attr('width', d => xScale(d.inherent))
+                .attr('height', yScale.bandwidth() / 2)
+                .attr('fill', 'rgba(255,0,68,0.5)');
+            
+            // Residual risk bars
+            g.selectAll('.residual-bar')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('x', 0)
+                .attr('y', d => yScale(d.name) + yScale.bandwidth() / 2)
+                .attr('width', d => xScale(d.residual))
+                .attr('height', yScale.bandwidth() / 2)
+                .attr('fill', 'rgba(0,255,204,0.8)');
+            
+            // Labels
+            g.selectAll('.risk-label')
+                .data(data)
+                .enter()
+                .append('text')
+                .attr('x', -5)
+                .attr('y', d => yScale(d.name) + yScale.bandwidth() / 2)
+                .attr('text-anchor', 'end')
+                .attr('dominant-baseline', 'middle')
+                .attr('fill', '#00ffcc')
+                .attr('font-size', '10px')
+                .text(d => d.name.substring(0, 15) + '...');
+            
+            // X axis
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(d3.axisBottom(xScale))
+                .selectAll('text')
+                .style('fill', '#00ffcc');
+            
+            g.selectAll('.domain, .tick line')
+                .style('stroke', 'rgba(0,255,204,0.3)');
+        }
+
+        function renderControlGaps() {
+            const container = d3.select('#control-gaps');
+            const gaps = sampleData.risks.filter(r => !r.has_controls);
+            
+            const table = container.append('table')
+                .attr('class', 'data-table');
+            
+            const thead = table.append('thead');
+            thead.append('tr')
+                .selectAll('th')
+                .data(['Risk', 'Entity', 'Rating', 'Owner'])
+                .enter()
+                .append('th')
+                .text(d => d);
+            
+            const tbody = table.append('tbody');
+            gaps.forEach(risk => {
+                const row = tbody.append('tr');
+                row.append('td').text(risk.name);
+                row.append('td').text(risk.entity);
+                row.append('td').append('span')
+                    .attr('class', `severity-badge severity-${risk.residual_rating > 7 ? 'high' : 'medium'}`)
+                    .text(risk.residual_rating);
+                row.append('td').text(risk.owner);
+            });
+        }
+
+        function renderRiskIncidents() {
+            const container = d3.select('#risk-incidents');
+            const width = container.node().getBoundingClientRect().width;
+            const height = 300;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const data = sampleData.risks.map(r => ({
+                name: r.name,
+                incidents: r.incidents_30d,
+                rating: r.residual_rating
+            })).filter(d => d.incidents > 0);
+            
+            const margin = { top: 20, right: 30, bottom: 60, left: 40 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            const xScale = d3.scaleBand()
+                .domain(data.map(d => d.name))
+                .range([0, innerWidth])
+                .padding(0.1);
+            
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.incidents)])
+                .range([innerHeight, 0]);
+            
+            g.selectAll('.incident-bar')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('x', d => xScale(d.name))
+                .attr('y', d => yScale(d.incidents))
+                .attr('width', xScale.bandwidth())
+                .attr('height', d => innerHeight - yScale(d.incidents))
+                .attr('fill', d => d.rating > 7 ? '#ff0044' : '#ffaa00');
+            
+            // X axis
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(d3.axisBottom(xScale))
+                .selectAll('text')
+                .style('fill', '#00ffcc')
+                .style('text-anchor', 'end')
+                .attr('transform', 'rotate(-45)');
+            
+            // Y axis
+            g.append('g')
+                .call(d3.axisLeft(yScale))
+                .selectAll('text')
+                .style('fill', '#00ffcc');
+            
+            g.selectAll('.domain, .tick line')
+                .style('stroke', 'rgba(0,255,204,0.3)');
+        }
+
+        function renderAuditGaps() {
+            const container = d3.select('#audit-gaps');
+            const now = Date.now();
+            const eighteenMonthsAgo = now - (18 * 30 * 24 * 60 * 60 * 1000);
+            
+            const gaps = sampleData.risks.filter(r => {
+                const lastAudit = new Date(r.last_audit);
+                return lastAudit < eighteenMonthsAgo;
+            });
+            
+            const table = container.append('table')
+                .attr('class', 'data-table');
+            
+            const thead = table.append('thead');
+            thead.append('tr')
+                .selectAll('th')
+                .data(['Risk', 'Last Audit', 'Months Ago'])
+                .enter()
+                .append('th')
+                .text(d => d);
+            
+            const tbody = table.append('tbody');
+            gaps.forEach(risk => {
+                const row = tbody.append('tr');
+                const lastAudit = new Date(risk.last_audit);
+                const monthsAgo = Math.floor((now - lastAudit) / (30 * 24 * 60 * 60 * 1000));
+                
+                row.append('td').text(risk.name);
+                row.append('td').text(risk.last_audit);
+                row.append('td').append('span')
+                    .attr('class', `severity-badge severity-${monthsAgo > 24 ? 'high' : 'medium'}`)
+                    .text(monthsAgo);
+            });
+        }
+
+        // Control Coverage View
+        function renderControlsView() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="panel panel-full" style="grid-row: span 3;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">🛡️</div>
+                            Control Coverage & Effectiveness
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; height: 100%;">
+                            <div>
+                                <h3 style="color: #00ffcc; margin-bottom: 15px;">Orphan Controls</h3>
+                                <div id="orphan-controls"></div>
+                            </div>
+                            <div>
+                                <h3 style="color: #00ffcc; margin-bottom: 15px;">Control Effectiveness</h3>
+                                <div id="control-effectiveness"></div>
+                            </div>
+                            <div>
+                                <h3 style="color: #00ffcc; margin-bottom: 15px;">Controls with Issues</h3>
+                                <div id="controls-issues"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            renderOrphanControls();
+            renderControlEffectiveness();
+            renderControlsWithIssues();
+        }
+
+        function renderOrphanControls() {
+            const container = d3.select('#orphan-controls');
+            const orphans = sampleData.controls.filter(c => !c.risk_id);
+            
+            const table = container.append('table')
+                .attr('class', 'data-table');
+            
+            const thead = table.append('thead');
+            thead.append('tr')
+                .selectAll('th')
+                .data(['Control', 'Entity', 'Effectiveness'])
+                .enter()
+                .append('th')
+                .text(d => d);
+            
+            const tbody = table.append('tbody');
+            orphans.forEach(control => {
+                const row = tbody.append('tr');
+                row.append('td').text(control.name);
+                row.append('td').text(control.entity);
+                row.append('td').text(control.effectiveness + '%');
+            });
+        }
+
+        function renderControlEffectiveness() {
+            const container = d3.select('#control-effectiveness');
+            const width = container.node().getBoundingClientRect().width;
+            const height = 400;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const data = sampleData.controls.map(c => ({
+                name: c.name,
+                effectiveness: c.effectiveness
+            }));
+            
+            const margin = { top: 20, right: 30, bottom: 100, left: 40 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            const xScale = d3.scaleBand()
+                .domain(data.map(d => d.name))
+                .range([0, innerWidth])
+                .padding(0.1);
+            
+            const yScale = d3.scaleLinear()
+                .domain([0, 100])
+                .range([innerHeight, 0]);
+            
+            g.selectAll('.effectiveness-bar')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('x', d => xScale(d.name))
+                .attr('y', d => yScale(d.effectiveness))
+                .attr('width', xScale.bandwidth())
+                .attr('height', d => innerHeight - yScale(d.effectiveness))
+                .attr('fill', d => d.effectiveness > 80 ? '#00ff44' : d.effectiveness > 60 ? '#ffaa00' : '#ff0044');
+            
+            // X axis
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(d3.axisBottom(xScale))
+                .selectAll('text')
+                .style('fill', '#00ffcc')
+                .style('text-anchor', 'end')
+                .attr('transform', 'rotate(-45)');
+            
+            // Y axis
+            g.append('g')
+                .call(d3.axisLeft(yScale))
+                .selectAll('text')
+                .style('fill', '#00ffcc');
+            
+            g.selectAll('.domain, .tick line')
+                .style('stroke', 'rgba(0,255,204,0.3)');
+        }
+
+        function renderControlsWithIssues() {
+            const container = d3.select('#controls-issues');
+            const controlsWithIssues = sampleData.controls.filter(c => c.issues > 0)
+                .sort((a, b) => b.issues - a.issues);
+            
+            const table = container.append('table')
+                .attr('class', 'data-table');
+            
+            const thead = table.append('thead');
+            thead.append('tr')
+                .selectAll('th')
+                .data(['Control', 'Issues', 'Incidents', 'Entity'])
+                .enter()
+                .append('th')
+                .text(d => d);
+            
+            const tbody = table.append('tbody');
+            controlsWithIssues.forEach(control => {
+                const row = tbody.append('tr');
+                row.append('td').text(control.name);
+                row.append('td').append('span')
+                    .attr('class', `severity-badge severity-${control.issues > 2 ? 'high' : 'medium'}`)
+                    .text(control.issues);
+                row.append('td').text(control.incidents);
+                row.append('td').text(control.entity);
+            });
+        }
+
+        // Additional view implementations would follow similar patterns...
+        
+        // Control panel functions
+        function refreshData() {
+            // Simulate data refresh
+            const loader = document.createElement('div');
+            loader.className = 'loading';
+            document.getElementById('main-content').appendChild(loader);
+            
+            setTimeout(() => {
+                loader.remove();
+                renderDashboard();
+            }, 1500);
+        }
+
+        function exportReport() {
+            alert('Exporting audit report to quantum storage...');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Update controls
+        document.getElementById('time-range').addEventListener('input', function() {
+            document.getElementById('time-display').textContent = this.value + ' days';
+        });
+
+        document.getElementById('risk-threshold').addEventListener('input', function() {
+            document.getElementById('threshold-display').textContent = this.value + '.0';
+        });
+
+        // Update stardate
+        function updateStardate() {
+            const now = new Date();
+            const stardate = (now.getFullYear() - 2000) * 1000 + Math.floor((now.getMonth() + 1) * 83.33) + now.getDate();
+            document.getElementById('stardate').textContent = (stardate / 100).toFixed(3);
+        }
+
+        setInterval(updateStardate, 1000);
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initStarfield();
+            renderDashboard();
+            updateStardate();
+        });
+
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('starfield');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Re-render current view
+            const activeView = document.querySelector('.nav-btn.active').dataset.view;
+            if (activeView === 'dashboard') {
+                renderDashboard();
+            } else {
+                renderDetailedView(activeView);
+            }
+        });
+    </script>
+</body>
+</html>
