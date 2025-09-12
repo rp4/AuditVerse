@@ -1275,8 +1275,6 @@
         }
 
         .risk-node.selected {
-            stroke: #fff;
-            stroke-width: 3;
             filter: drop-shadow(0 0 30px currentColor);
         }
 
@@ -1340,15 +1338,7 @@
             opacity: 1;
         }
 
-        /* Pulse animation for nodes */
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-
-        .pulse {
-            animation: pulse 2s ease-in-out infinite;
-        }
+        /* Pulse animation removed */
 
         /* Risk level indicators */
         .risk-critical {
@@ -2322,9 +2312,6 @@
                 .attr('class', d => `risk-node ${getRiskClass(currentMode === 'inherent' ? d.inherent_rating : d.residual_rating)}`)
                 .attr('r', d => d.radius)
                 .attr('fill-opacity', 0.8)
-                .attr('stroke', '#fff')
-                .attr('stroke-width', 2)
-                .attr('stroke-opacity', 0)
                 .on('click', (event, d) => selectNode(d))
                 .on('mouseover', function(event, d) {
                     const rating = currentMode === 'inherent' ? d.inherent_rating : d.residual_rating;
@@ -2333,13 +2320,9 @@
                         Likelihood: ${currentMode === 'inherent' ? d.inherent_likelihood : d.residual_likelihood}<br>
                         Severity: ${currentMode === 'inherent' ? d.inherent_severity : d.residual_severity}<br>
                         Rating: ${rating}`);
-                    d3.select(this).attr('stroke-opacity', 1);
                 })
                 .on('mouseout', function() {
                     hideTooltip();
-                    if (!d3.select(this.parentNode).classed('selected')) {
-                        d3.select(this).attr('stroke-opacity', 0);
-                    }
                 });
 
             // Removed trend indicators for cleaner look
@@ -2361,11 +2344,9 @@
                 .attr('transform', d => `translate(${d.x},${d.y})`);
 
             entityNodes.append('circle')
-                .attr('class', d => `entity-node entity-${d.type} ${d.pulseEffect ? 'pulse' : ''}`)
+                .attr('class', d => `entity-node entity-${d.type}`)
                 .attr('r', d => d.radius)
                 .attr('fill-opacity', 0.8)
-                .attr('stroke', d => d.multiRisk ? '#ff00ff' : 'none')
-                .attr('stroke-width', d => d.multiRisk ? 2 : 0)
                 .on('click', (event, d) => selectNode(d))
                 .on('mouseover', function(event, d) {
                     const tooltipText = d.multiRisk 
@@ -2386,11 +2367,9 @@
                 .attr('transform', d => `translate(${d.x},${d.y})`);
 
             orbitingNodeGroups.append('circle')
-                .attr('class', d => `entity-node entity-${d.type} ${d.pulseEffect ? 'pulse' : ''}`)
+                .attr('class', d => `entity-node entity-${d.type}`)
                 .attr('r', d => d.radius)
                 .attr('fill-opacity', 0.8)
-                .attr('stroke', d => d.multiRisk ? '#ff00ff' : 'none')
-                .attr('stroke-width', d => d.multiRisk ? 2 : 0)
                 .on('click', (event, d) => selectNode(d))
                 .on('mouseover', function(event, d) {
                     const tooltipText = d.multiRisk 
@@ -2685,14 +2664,13 @@
             // Update selection state
             g.selectAll('.risk-node-group').classed('selected', false);
             g.selectAll('.entity-node-group').classed('selected', false);
-            g.selectAll('.risk-node').attr('stroke-opacity', 0);
             
             if (node.type === 'risk') {
                 g.selectAll('.risk-node-group')
                     .filter(d => d.id === node.id)
                     .classed('selected', true)
                     .select('.risk-node')
-                    .attr('stroke-opacity', 1);
+;
             } else {
                 g.selectAll('.entity-node-group')
                     .filter(d => d.id === node.id)
