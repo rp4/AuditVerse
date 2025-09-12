@@ -248,6 +248,35 @@
             transition: all 0.3s ease;
         }
         
+        .filter-select-buttons {
+            display: flex;
+            gap: 5px;
+            padding: 5px 8px;
+            background: #1a1a1f;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.2);
+        }
+        
+        .filter-select-btn {
+            flex: 1;
+            padding: 4px 8px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid rgba(0, 255, 204, 0.5);
+            border-radius: 3px;
+            color: #00ffcc;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 0.5px;
+        }
+        
+        .filter-select-btn:hover {
+            background: rgba(0, 255, 204, 0.2);
+            border-color: #00ffcc;
+            box-shadow: 0 0 5px rgba(0, 255, 204, 0.3);
+        }
+        
         .filter-search-input:focus {
             border-color: #00ffcc;
             box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
@@ -1486,6 +1515,10 @@
                             <div class="filter-search-container">
                                 <input type="text" class="filter-search-input" id="audit-search-input" placeholder="Search audits...">
                             </div>
+                            <div class="filter-select-buttons">
+                                <button class="filter-select-btn" id="audit-select-all">Select All</button>
+                                <button class="filter-select-btn" id="audit-deselect-all">Deselect All</button>
+                            </div>
                             <div class="filter-options-container" id="audit-options-container">
                                 <!-- Audit options will be populated here -->
                             </div>
@@ -1504,6 +1537,10 @@
                             <div class="filter-search-container">
                                 <input type="text" class="filter-search-input" id="unit-search-input" placeholder="Search units...">
                             </div>
+                            <div class="filter-select-buttons">
+                                <button class="filter-select-btn" id="unit-select-all">Select All</button>
+                                <button class="filter-select-btn" id="unit-deselect-all">Deselect All</button>
+                            </div>
                             <div class="filter-options-container" id="unit-options-container">
                                 <!-- Unit options will be populated here -->
                             </div>
@@ -1521,6 +1558,10 @@
                         <div class="filter-dropdown" id="standard-dropdown">
                             <div class="filter-search-container">
                                 <input type="text" class="filter-search-input" id="standard-search-input" placeholder="Search standards...">
+                            </div>
+                            <div class="filter-select-buttons">
+                                <button class="filter-select-btn" id="standard-select-all">Select All</button>
+                                <button class="filter-select-btn" id="standard-deselect-all">Deselect All</button>
                             </div>
                             <div class="filter-options-container" id="standard-options-container">
                                 <!-- Standard options will be populated here -->
@@ -1550,17 +1591,9 @@
             <div class="control-section">
                 <h3 class="control-title">Risk View Mode</h3>
                 <div class="toggle-group">
-                    <div class="toggle-item active" data-mode="residual">
+                    <div class="toggle-item" data-mode="toggle-risk">
                         <div class="toggle-checkbox"></div>
-                        <span>Residual Risk (With Controls)</span>
-                    </div>
-                    <div class="toggle-item" data-mode="inherent">
-                        <div class="toggle-checkbox"></div>
-                        <span>Inherent Risk (Without Controls)</span>
-                    </div>
-                    <div class="toggle-item" data-mode="transition">
-                        <div class="toggle-checkbox"></div>
-                        <span>Animate Transition</span>
+                        <span id="risk-mode-label">Residual Risk (with controls)</span>
                     </div>
                 </div>
             </div>
@@ -2008,35 +2041,195 @@
             // Create risk lookup for orbiting entities
             const riskById = new Map(riskNodes.map(r => [r.id, r]));
 
-            // Filter entities based on selected audits
-            let allowedEntities = null;
-            if (selectedAudits.size > 0) {
-                allowedEntities = new Set();
-                
-                // Find all entities connected to selected audits
+            // Filter entities based on selected filters
+            let allowedEntities = new Set();
+            
+            // Check selection states
+            const noAuditsSelected = selectedAudits.size === 0;
+            const noUnitsSelected = selectedUnits.size === 0;
+            const noStandardsSelected = selectedStandards.size === 0;
+            const allAuditsSelected = selectedAudits.size === data.audits.length;
+            const allUnitsSelected = selectedUnits.size === data.businessUnits.length;
+            const allStandardsSelected = selectedStandards.size === data.standards.length;
+            
+            // If all items in all categories are selected, show everything
+            if (allAuditsSelected && allUnitsSelected && allStandardsSelected) {
+                // Show all entities
+                data.risks.forEach(risk => allowedEntities.add(risk.id));
                 data.relationships.forEach(rel => {
-                    if (selectedAudits.has(rel.source) || selectedAudits.has(rel.target)) {
-                        // Add both source and target to allowed entities
-                        allowedEntities.add(rel.source);
-                        allowedEntities.add(rel.target);
+                    allowedEntities.add(rel.source);
+                    allowedEntities.add(rel.target);
+                });
+            } else {
+                // Apply filters based on selections
+                let auditEntities = null;
+                let unitEntities = null;
+                let standardEntities = null;
+                
+                // Handle Audits filter
+                if (noAuditsSelected) {
+                    // Show only risks with NO audit connections
+                    auditEntities = new Set();
+                    data.risks.forEach(risk => {
+                        let hasAuditConnection = false;
+                        data.relationships.forEach(rel => {
+                            if ((rel.source === risk.id || rel.target === risk.id) && 
+                                (rel.source.startsWith('A') || rel.target.startsWith('A'))) {
+                                hasAuditConnection = true;
+                            }
+                        });
+                        if (!hasAuditConnection) {
+                            auditEntities.add(risk.id);
+                        }
+                    });
+                } else if (!allAuditsSelected) {
+                    // Show risks connected to selected audits
+                    auditEntities = new Set();
+                    data.relationships.forEach(rel => {
+                        if (selectedAudits.has(rel.source) || selectedAudits.has(rel.target)) {
+                            auditEntities.add(rel.source);
+                            auditEntities.add(rel.target);
+                            // Add 2-hop connections
+                            data.relationships.forEach(rel2 => {
+                                if (rel2.source === rel.source || rel2.source === rel.target ||
+                                    rel2.target === rel.source || rel2.target === rel.target) {
+                                    auditEntities.add(rel2.source);
+                                    auditEntities.add(rel2.target);
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                // Handle Business Units filter
+                if (noUnitsSelected) {
+                    // Show only risks with NO business unit assignment
+                    unitEntities = new Set();
+                    const unitEntityMap = {
+                        'BU001': 'IT Systems',
+                        'BU002': 'Finance',
+                        'BU003': 'HR',
+                        'BU004': 'Operations',
+                        'BU005': 'Legal',
+                        'BU006': 'Sales',
+                        'BU007': 'R&D',
+                        'BU008': 'Customer Service'
+                    };
+                    const mappedEntities = new Set(Object.values(unitEntityMap));
+                    
+                    data.risks.forEach(risk => {
+                        if (!mappedEntities.has(risk.entity)) {
+                            unitEntities.add(risk.id);
+                            // Add connected entities
+                            data.relationships.forEach(rel => {
+                                if (rel.source === risk.id || rel.target === risk.id) {
+                                    unitEntities.add(rel.source);
+                                    unitEntities.add(rel.target);
+                                }
+                            });
+                        }
+                    });
+                } else if (!allUnitsSelected) {
+                        unitEntities = new Set();
+                        // Map business unit names to entity names
+                        const unitEntityMap = {
+                            'BU001': 'IT Systems', // Information Technology
+                            'BU002': 'Finance', // Finance & Accounting  
+                            'BU003': 'HR', // Human Resources
+                            'BU004': 'Operations', // Operations
+                            'BU005': 'Legal', // Legal & Compliance
+                            'BU006': 'Sales', // Sales & Marketing
+                            'BU007': 'R&D', // Research & Development
+                            'BU008': 'Customer Service' // Customer Service
+                        };
                         
-                        // Also add entities connected to these entities (2-hop connection)
-                        data.relationships.forEach(rel2 => {
-                            if (rel2.source === rel.source || rel2.source === rel.target ||
-                                rel2.target === rel.source || rel2.target === rel.target) {
-                                allowedEntities.add(rel2.source);
-                                allowedEntities.add(rel2.target);
+                        // Add risks that belong to selected business units
+                        data.risks.forEach(risk => {
+                            for (const unitId of selectedUnits) {
+                                if (risk.entity === unitEntityMap[unitId]) {
+                                    unitEntities.add(risk.id);
+                                    // Add all entities connected to this risk
+                                    data.relationships.forEach(rel => {
+                                        if (rel.source === risk.id || rel.target === risk.id) {
+                                            unitEntities.add(rel.source);
+                                            unitEntities.add(rel.target);
+                                        }
+                                    });
+                                }
                             }
                         });
                     }
-                });
+                    
                 
-                // Remove selected audit IDs from allowed entities (we don't want to show them as nodes)
+                // Handle Standards filter
+                if (noStandardsSelected) {
+                    // Show only risks with NO standards connections
+                    standardEntities = new Set();
+                    data.risks.forEach(risk => {
+                        let hasStandardConnection = false;
+                        data.relationships.forEach(rel => {
+                            if ((rel.source === risk.id || rel.target === risk.id) && 
+                                (rel.source.startsWith('ST') || rel.target.startsWith('ST'))) {
+                                hasStandardConnection = true;
+                            }
+                        });
+                        if (!hasStandardConnection) {
+                            standardEntities.add(risk.id);
+                        }
+                    });
+                } else if (!allStandardsSelected) {
+                    // Show risks connected to selected standards
+                    standardEntities = new Set();
+                    data.relationships.forEach(rel => {
+                        if (selectedStandards.has(rel.source) || selectedStandards.has(rel.target)) {
+                            standardEntities.add(rel.source);
+                            standardEntities.add(rel.target);
+                            // Add 2-hop connections
+                            data.relationships.forEach(rel2 => {
+                                if (rel2.source === rel.source || rel2.source === rel.target ||
+                                    rel2.target === rel.source || rel2.target === rel.target) {
+                                    standardEntities.add(rel2.source);
+                                    standardEntities.add(rel2.target);
+                                }
+                                });
+                            }
+                        });
+                    }
+                    
+                
+                // Combine filters - need to handle all, some, or none selected for each type
+                let sets = [];
+                
+                // Add sets based on what's selected/not selected
+                if (auditEntities !== null) sets.push(auditEntities);
+                if (unitEntities !== null) sets.push(unitEntities);
+                if (standardEntities !== null) sets.push(standardEntities);
+                
+                if (sets.length === 0) {
+                    // All filters show everything - no filtering needed
+                    data.risks.forEach(risk => allowedEntities.add(risk.id));
+                    data.relationships.forEach(rel => {
+                        allowedEntities.add(rel.source);
+                        allowedEntities.add(rel.target);
+                    });
+                } else if (sets.length === 1) {
+                    // Only one filter type active
+                    allowedEntities = new Set(sets[0]);
+                } else {
+                    // Multiple filter types - use intersection
+                    allowedEntities = new Set(sets[0]);
+                    for (let i = 1; i < sets.length; i++) {
+                        allowedEntities = new Set([...allowedEntities].filter(x => sets[i].has(x)));
+                    }
+                }
+                
+                // Remove selected filter IDs from allowed entities (we don't want to show them as nodes)
                 selectedAudits.forEach(auditId => allowedEntities.delete(auditId));
-                
-                // Filter risk nodes based on allowed entities
-                riskNodes = riskNodes.filter(risk => allowedEntities.has(risk.id));
+                selectedStandards.forEach(standardId => allowedEntities.delete(standardId));
             }
+            
+            // Filter risk nodes based on allowed entities
+            riskNodes = riskNodes.filter(risk => allowedEntities.has(risk.id));
 
             // Prepare other nodes
             const otherNodes = [];
@@ -2524,8 +2717,8 @@
         function animateTransition() {
             const duration = 2000;
             
-            // Update risk nodes in the data
-            const targetMode = currentMode === 'inherent' ? 'residual' : 'inherent';
+            // Use currentMode as the target mode (it's already been set in the click handler)
+            const targetMode = currentMode;
             
             // Animate risk positions
             g.selectAll('.risk-node-group')
@@ -2584,8 +2777,6 @@
                     return 0;
                 });
 
-            currentMode = targetMode;
-            
             // After animation, refresh to ensure orbiting nodes are correctly positioned
             setTimeout(() => {
                 updateVisualization();
@@ -2866,17 +3057,28 @@
             item.addEventListener('click', function() {
                 const mode = this.dataset.mode;
                 
-                if (mode === 'transition') {
+                if (mode === 'toggle-risk') {
+                    // Toggle between residual and inherent modes
+                    const isActive = this.classList.contains('active');
+                    const label = document.getElementById('risk-mode-label');
+                    
+                    if (isActive) {
+                        // Currently showing residual (active), switch to inherent
+                        this.classList.remove('active');
+                        currentMode = 'inherent';
+                        label.textContent = 'Inherent Risk (without controls)';
+                    } else {
+                        // Currently showing inherent (inactive), switch to residual
+                        this.classList.add('active');
+                        currentMode = 'residual';
+                        label.textContent = 'Residual Risk (with controls)';
+                    }
+                    
+                    // Animate the transition
                     animateTransition();
+                    updateStats();
                     return;
                 }
-                
-                document.querySelectorAll('.toggle-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-                
-                currentMode = mode;
-                updateVisualization();
-                updateStats();
             });
         });
 
@@ -2919,6 +3121,8 @@
                 this.optionsContainer = document.getElementById(`${this.id}-options-container`);
                 this.searchInput = document.getElementById(`${this.id}-search-input`);
                 this.multiselect = document.getElementById(`${this.id}-multiselect`);
+                this.selectAllBtn = document.getElementById(`${this.id}-select-all`);
+                this.deselectAllBtn = document.getElementById(`${this.id}-deselect-all`);
                 
                 this.init();
             }
@@ -2926,6 +3130,8 @@
             init() {
                 this.populateOptions();
                 this.setupEventListeners();
+                // Select all items by default
+                this.selectAll();
             }
             
             populateOptions() {
@@ -2963,6 +3169,22 @@
                 this.searchInput.addEventListener('click', (e) => {
                     e.stopPropagation();
                 });
+                
+                // Select All button
+                if (this.selectAllBtn) {
+                    this.selectAllBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.selectAll();
+                    });
+                }
+                
+                // Deselect All button
+                if (this.deselectAllBtn) {
+                    this.deselectAllBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.deselectAll();
+                    });
+                }
                 
                 // Toggle dropdown
                 this.selected.addEventListener('click', () => {
@@ -3043,13 +3265,29 @@
                 return this.selectedItems;
             }
             
-            clearSelection() {
+            selectAll() {
+                this.selectedItems.clear();
+                this.items.forEach(item => {
+                    this.selectedItems.add(item.id);
+                });
+                this.optionsContainer.querySelectorAll('.filter-option').forEach(opt => {
+                    opt.classList.add('selected');
+                });
+                this.updateDisplay();
+                this.onSelectionChange(this.selectedItems);
+            }
+            
+            deselectAll() {
                 this.selectedItems.clear();
                 this.optionsContainer.querySelectorAll('.filter-option').forEach(opt => {
                     opt.classList.remove('selected');
                 });
                 this.updateDisplay();
                 this.onSelectionChange(this.selectedItems);
+            }
+            
+            clearSelection() {
+                this.deselectAll();
             }
         }
         
@@ -3177,14 +3415,8 @@
             if (e.key === 'r') {
                 resetTimeline();
             }
-            if (e.key === 'i') {
-                document.querySelector('[data-mode="inherent"]').click();
-            }
-            if (e.key === 's') {
-                document.querySelector('[data-mode="residual"]').click();
-            }
             if (e.key === 't') {
-                document.querySelector('[data-mode="transition"]').click();
+                document.querySelector('[data-mode="toggle-risk"]').click();
             }
         });
     </script>
