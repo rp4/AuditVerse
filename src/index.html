@@ -144,7 +144,166 @@
             color: #00ffcc;
         }
 
-        /* Audit Filter Multiselect */
+        /* Common Filter Styles */
+        .filters-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            z-index: 9999;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+        
+        .filter-label {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.85rem;
+            color: #00ffcc;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            white-space: nowrap;
+        }
+        
+        .filter-multiselect {
+            position: relative;
+            min-width: 200px;
+            z-index: 9999;
+        }
+        
+        .filter-selected {
+            background: rgba(0, 255, 204, 0.1);
+            border: 2px solid #00ffcc;
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            min-height: 36px;
+            font-size: 0.85rem;
+        }
+        
+        .filter-selected:hover {
+            background: rgba(0, 255, 204, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+        }
+        
+        .filter-selected.active {
+            border-color: #ff00ff;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+        }
+        
+        .filter-placeholder {
+            color: rgba(0, 255, 204, 0.5);
+            font-size: 0.85rem;
+        }
+        
+        .filter-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a1f;
+            border: 2px solid #00ffcc;
+            border-radius: 8px;
+            margin-top: 5px;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+            z-index: 10000;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .filter-dropdown.show {
+            display: block;
+        }
+        
+        .filter-search-container {
+            position: sticky;
+            top: 0;
+            background: #1a1a1f;
+            padding: 8px;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+            z-index: 1;
+        }
+        
+        .filter-search-input {
+            width: 100%;
+            padding: 6px 10px;
+            background: #0a0a0f;
+            border: 1px solid rgba(0, 255, 204, 0.5);
+            border-radius: 4px;
+            color: #00ffcc;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-search-input:focus {
+            border-color: #00ffcc;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
+        
+        .filter-search-input::placeholder {
+            color: rgba(0, 255, 204, 0.4);
+        }
+        
+        .filter-options-container {
+            max-height: 190px;
+            overflow-y: auto;
+        }
+        
+        .filter-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .filter-option:hover {
+            background: rgba(0, 255, 204, 0.1);
+        }
+        
+        .filter-option.selected {
+            background: rgba(0, 255, 204, 0.2);
+        }
+        
+        .filter-option-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #00ffcc;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .filter-option.selected .filter-option-checkbox {
+            background: #00ffcc;
+        }
+        
+        .filter-option.selected .filter-option-checkbox::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: #0c0c1a;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        /* Audit Filter Multiselect - Keep for backward compatibility */
         .audit-filter-container {
             display: flex;
             align-items: center;
@@ -233,11 +392,47 @@
             border: 2px solid #00ffcc;
             border-radius: 8px;
             margin-top: 5px;
-            max-height: 200px;
+            max-height: 250px;
             overflow-y: auto;
             display: none;
             z-index: 10000;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .audit-search-container {
+            position: sticky;
+            top: 0;
+            background: #1a1a1f;
+            padding: 10px;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+            z-index: 1;
+        }
+        
+        .audit-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0a0a0f;
+            border: 1px solid rgba(0, 255, 204, 0.5);
+            border-radius: 4px;
+            color: #00ffcc;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .audit-search-input:focus {
+            border-color: #00ffcc;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
+        
+        .audit-search-input::placeholder {
+            color: rgba(0, 255, 204, 0.4);
+        }
+        
+        .audit-options-container {
+            max-height: 190px;
+            overflow-y: auto;
         }
 
         .audit-dropdown.show {
@@ -495,6 +690,14 @@
             box-shadow: 
                 2px 2px 4px rgba(0,0,0,0.5),
                 -1px -1px 2px rgba(60,60,60,0.3);
+        }
+        
+        .coverage-percent {
+            margin-left: auto;
+            font-size: 11px;
+            color: #00ff99;
+            opacity: 0.8;
+            font-weight: 600;
         }
         
         .entity-filter::before {
@@ -1153,15 +1356,15 @@
         }
 
         .risk-high {
-            fill: #ff6600;
+            fill: #ff0044;
         }
 
         .risk-medium {
-            fill: #ffaa00;
+            fill: #ff0044;
         }
 
         .risk-low {
-            fill: #00ff44;
+            fill: #ff0044;
         }
 
         /* Entity type colors */
@@ -1281,25 +1484,69 @@
         <!-- Header -->
         <header class="header">
             <h1 class="title">AuditVerse</h1>
-            <div class="audit-filter-container">
-                <label class="audit-filter-label">Select Audits:</label>
-                <div class="audit-multiselect" id="audit-multiselect">
-                    <div class="audit-selected" id="audit-selected">
-                        <span class="audit-placeholder">Select audits to filter...</span>
+            <div class="filters-container">
+                <!-- Audits Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">Audits:</label>
+                    <div class="filter-multiselect" id="audit-multiselect">
+                        <div class="filter-selected" id="audit-selected">
+                            <span class="filter-placeholder">Select audits...</span>
+                        </div>
+                        <div class="filter-dropdown" id="audit-dropdown">
+                            <div class="filter-search-container">
+                                <input type="text" class="filter-search-input" id="audit-search-input" placeholder="Search audits...">
+                            </div>
+                            <div class="filter-options-container" id="audit-options-container">
+                                <!-- Audit options will be populated here -->
+                            </div>
+                        </div>
                     </div>
-                    <div class="audit-dropdown" id="audit-dropdown">
-                        <!-- Audit options will be populated here -->
+                </div>
+                
+                <!-- Business Units Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">Business Units:</label>
+                    <div class="filter-multiselect" id="unit-multiselect">
+                        <div class="filter-selected" id="unit-selected">
+                            <span class="filter-placeholder">Select units...</span>
+                        </div>
+                        <div class="filter-dropdown" id="unit-dropdown">
+                            <div class="filter-search-container">
+                                <input type="text" class="filter-search-input" id="unit-search-input" placeholder="Search units...">
+                            </div>
+                            <div class="filter-options-container" id="unit-options-container">
+                                <!-- Unit options will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Standards Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">Standards:</label>
+                    <div class="filter-multiselect" id="standard-multiselect">
+                        <div class="filter-selected" id="standard-selected">
+                            <span class="filter-placeholder">Select standards...</span>
+                        </div>
+                        <div class="filter-dropdown" id="standard-dropdown">
+                            <div class="filter-search-container">
+                                <input type="text" class="filter-search-input" id="standard-search-input" placeholder="Search standards...">
+                            </div>
+                            <div class="filter-options-container" id="standard-options-container">
+                                <!-- Standard options will be populated here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="header-stats">
                 <div class="stat-item">
-                    <div class="stat-label">Total Risks</div>
-                    <div class="stat-value" id="total-risks">0</div>
+                    <div class="stat-label">Total Audits</div>
+                    <div class="stat-value" id="total-audits">0</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-label">Critical Zone</div>
-                    <div class="stat-value" id="critical-risks">0</div>
+                    <div class="stat-label">Total Risks</div>
+                    <div class="stat-value" id="total-risks">0</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Coverage</div>
@@ -1333,22 +1580,27 @@
                 <div class="entity-filter active" data-entity="controls">
                     <div class="entity-icon" style="background: #00ccff;">🛡️</div>
                     <span>Controls</span>
+                    <span class="coverage-percent" id="controls-coverage"></span>
                 </div>
                 <div class="entity-filter active" data-entity="issues">
                     <div class="entity-icon" style="background: #ffff00;">⚠️</div>
                     <span>Issues</span>
+                    <span class="coverage-percent" id="issues-coverage"></span>
                 </div>
                 <div class="entity-filter active" data-entity="incidents">
                     <div class="entity-icon" style="background: #ff0099;">🚨</div>
                     <span>Incidents</span>
+                    <span class="coverage-percent" id="incidents-coverage"></span>
                 </div>
                 <div class="entity-filter active" data-entity="entities">
                     <div class="entity-icon" style="background: #00ff99;">🏢</div>
                     <span>Business Units</span>
+                    <span class="coverage-percent" id="entities-coverage"></span>
                 </div>
                 <div class="entity-filter active" data-entity="standards">
                     <div class="entity-icon" style="background: #9966ff;">📋</div>
                     <span>Standards</span>
+                    <span class="coverage-percent" id="standards-coverage"></span>
                 </div>
                 <div class="entity-filter active" data-entity="audits">
                     <div class="entity-icon" style="background: #ff00ff;">🔍</div>
@@ -1520,6 +1772,28 @@
                 { id: 'A004', name: 'Operations Assessment', status: 'Completed', date: '2024-10-15' }
             ],
             
+            businessUnits: [
+                { id: 'BU001', name: 'Information Technology', code: 'IT' },
+                { id: 'BU002', name: 'Finance & Accounting', code: 'FIN' },
+                { id: 'BU003', name: 'Human Resources', code: 'HR' },
+                { id: 'BU004', name: 'Operations', code: 'OPS' },
+                { id: 'BU005', name: 'Legal & Compliance', code: 'LEG' },
+                { id: 'BU006', name: 'Sales & Marketing', code: 'S&M' },
+                { id: 'BU007', name: 'Research & Development', code: 'R&D' },
+                { id: 'BU008', name: 'Customer Service', code: 'CS' }
+            ],
+            
+            standards: [
+                { id: 'ST001', name: 'ISO 27001', category: 'Security' },
+                { id: 'ST002', name: 'SOC 2', category: 'Security' },
+                { id: 'ST003', name: 'GDPR', category: 'Privacy' },
+                { id: 'ST004', name: 'HIPAA', category: 'Healthcare' },
+                { id: 'ST005', name: 'PCI DSS', category: 'Payment' },
+                { id: 'ST006', name: 'NIST', category: 'Cybersecurity' },
+                { id: 'ST007', name: 'ISO 9001', category: 'Quality' },
+                { id: 'ST008', name: 'COBIT', category: 'Governance' }
+            ],
+            
             issues: [
                 { id: 'I001', title: 'Weak Passwords', severity: 'High', status: 'Open' },
                 { id: 'I002', title: 'Missing Documentation', severity: 'Medium', status: 'In Progress' },
@@ -1658,7 +1932,6 @@
         let currentMode = 'residual';
         let selectedNode = null;
         let activeFilters = new Set(['controls', 'issues', 'incidents', 'entities', 'standards', 'audits']);
-        let selectedAudits = new Set();
         let animationInterval = null;
         let timelineValue = 0;
 
@@ -1710,6 +1983,9 @@
 
             // Update stats
             updateStats();
+            
+            // Initialize dropdowns after D3 is ready
+            initializeDropdowns();
         }
 
         // Draw background (stars and grid removed for cleaner visualization)
@@ -1815,7 +2091,7 @@
                                        itemType === 'standard' ? Math.PI / 4 :
                                        itemType === 'audit' ? Math.PI * 1.25 : 0;
                     const angle = angleOffset + (index * Math.PI / 4) % (Math.PI * 2);
-                    const distance = 45;
+                    const distance = 85;
                     
                     return {
                         ...item,
@@ -1901,7 +2177,7 @@
                         return; // Skip this entity if not connected to selected audits
                     }
                     
-                    const node = positionNodeByRiskConnections(entity, 'entity', 'owned_by', 18, i);
+                    const node = positionNodeByRiskConnections(entity, 'entity', 'owned_by', 22, i);
                     otherNodes.push(node);
                     allNodes.push(node);
                 });
@@ -1973,12 +2249,12 @@
                     !l.source.parentRisk && !l.target.parentRisk))
                     .id(d => d.id)
                     .distance(d => {
-                        // Very short distance for entity-risk connections
+                        // Increased distance for entity-risk connections to prevent overlap
                         if ((d.source.type === 'entity' && d.target.type === 'risk') ||
                             (d.source.type === 'risk' && d.target.type === 'entity')) {
-                            return 30; // Reduced from 80 to allow entities to be right next to risks
+                            return 80; // Increased to prevent overlaps
                         }
-                        return 50;
+                        return 60;
                     })
                     .strength(d => {
                         // Much stronger pull for entity-risk connections
@@ -1990,16 +2266,17 @@
                     }))
                 .force('charge', d3.forceManyBody()
                     .strength(d => {
-                        // Reduced repulsion for entities to allow them closer to risks
-                        if (d.type === 'entity') return -30; // Reduced from -100
-                        if (d.type === 'risk') return -80; // Reduced from -150
-                        return -50;
+                        // Increased repulsion to prevent overlaps
+                        if (d.type === 'entity') return -100; // Increased repulsion
+                        if (d.type === 'risk') return -200; // Strong repulsion for risks
+                        return -80;
                     }))
                 .force('collision', d3.forceCollide().radius(d => {
-                    // Smaller collision radius for entities to allow closer positioning
-                    if (d.type === 'entity') return d.radius + 2; // Reduced padding
-                    return d.radius + 5; // Normal padding for others
-                }))
+                    // Increased collision radius to prevent overlaps
+                    if (d.type === 'risk') return d.radius + 20; // More padding for risks
+                    if (d.type === 'entity') return d.radius + 15; // More padding for entities  
+                    return d.radius + 10; // More padding for other nodes
+                }).strength(0.9))
                 .force('center', d3.forceCenter(width / 2, height / 2).strength(0.02)); // Reduced center force
 
             // Draw links
@@ -2241,7 +2518,7 @@
                                                node.type === 'standard' ? Math.PI / 4 :
                                                node.type === 'audit' ? Math.PI * 1.25 : 0;
                             const angle = angleOffset + (itemIndex * Math.PI / 4) % (Math.PI * 2);
-                            const distance = 45;
+                            const distance = 70;
                             
                             node.fx = risk.x + Math.cos(angle) * distance;
                             node.fy = risk.y + Math.sin(angle) * distance;
@@ -2512,14 +2789,75 @@
         }
 
         // Update statistics
-        function updateStats() {
-            document.getElementById('total-risks').textContent = data.risks.length;
+        function calculateEntityCoverage() {
+            // Get all entities connected to audits
+            const auditConnections = data.relationships.filter(rel => 
+                rel.type === 'assessed_by' && 
+                data.audits.some(audit => audit.id === rel.target)
+            );
             
-            const criticalRisks = data.risks.filter(r => {
-                const rating = currentMode === 'inherent' ? r.inherent_rating : r.residual_rating;
-                return rating >= 8;
-            }).length;
-            document.getElementById('critical-risks').textContent = criticalRisks;
+            // Calculate coverage for each entity type
+            const coverageData = {
+                controls: { connected: new Set(), total: data.controls.length },
+                issues: { connected: new Set(), total: data.issues.length },
+                incidents: { connected: new Set(), total: data.incidents.length },
+                entities: { connected: new Set(), total: data.entities.length },
+                standards: { connected: new Set(), total: data.standards.length }
+            };
+            
+            // Find all entities connected to audits through risks
+            auditConnections.forEach(auditRel => {
+                const riskId = auditRel.source;
+                
+                // Find all relationships involving this risk
+                data.relationships.forEach(rel => {
+                    // Controls connected to this risk
+                    if (rel.type === 'mitigates' && rel.source === riskId) {
+                        const control = data.controls.find(c => c.id === rel.target);
+                        if (control) coverageData.controls.connected.add(rel.target);
+                    }
+                    
+                    // Issues connected to this risk
+                    if (rel.type === 'causes' && rel.source === riskId) {
+                        const issue = data.issues.find(i => i.id === rel.target);
+                        if (issue) coverageData.issues.connected.add(rel.target);
+                    }
+                    
+                    // Incidents connected to this risk
+                    if (rel.type === 'realized_in' && rel.source === riskId) {
+                        const incident = data.incidents.find(i => i.id === rel.target);
+                        if (incident) coverageData.incidents.connected.add(rel.target);
+                    }
+                    
+                    // Entities connected to this risk
+                    if (rel.type === 'owned_by' && rel.source === riskId) {
+                        const entity = data.entities.find(e => e.id === rel.target);
+                        if (entity) coverageData.entities.connected.add(rel.target);
+                    }
+                    
+                    // Standards connected to this risk
+                    if (rel.type === 'requires' && rel.source === riskId) {
+                        const standard = data.standards.find(s => s.id === rel.target);
+                        if (standard) coverageData.standards.connected.add(rel.target);
+                    }
+                });
+            });
+            
+            // Update the display for each entity type
+            Object.keys(coverageData).forEach(entityType => {
+                const coverage = coverageData[entityType];
+                const percentage = coverage.total > 0 ? 
+                    Math.round((coverage.connected.size / coverage.total) * 100) : 0;
+                const element = document.getElementById(`${entityType}-coverage`);
+                if (element) {
+                    element.textContent = `${percentage}%`;
+                }
+            });
+        }
+        
+        function updateStats() {
+            document.getElementById('total-audits').textContent = data.audits.length;
+            document.getElementById('total-risks').textContent = data.risks.length;
             
             const risksWithControls = data.relationships.filter(r => 
                 r.type === 'mitigates' && r.source.startsWith('R')
@@ -2527,6 +2865,9 @@
             const uniqueRisksWithControls = new Set(risksWithControls);
             const coverage = (uniqueRisksWithControls.size / data.risks.length * 100).toFixed(0);
             document.getElementById('coverage-percent').textContent = coverage + '%';
+            
+            // Calculate and display entity coverage
+            calculateEntityCoverage();
         }
 
         // Tooltip functions
@@ -2577,90 +2918,206 @@
             });
         });
 
-        // Initialize audit multiselect filter
-        initializeAuditFilter();
-
-        function initializeAuditFilter() {
-            const auditDropdown = document.getElementById('audit-dropdown');
-            const auditSelected = document.getElementById('audit-selected');
-            
-            // Populate audit options
-            data.audits.forEach(audit => {
-                const option = document.createElement('div');
-                option.className = 'audit-option';
-                option.dataset.auditId = audit.id;
-                option.innerHTML = `
-                    <div class="audit-option-checkbox"></div>
-                    <span>${audit.name} - ${audit.status}</span>
-                `;
+        // Global selection states - Move these after global variables
+        let selectedAudits = new Set();
+        let selectedUnits = new Set();
+        let selectedStandards = new Set();
+        
+        // Initialize dropdowns after everything is loaded
+        function initializeDropdowns() {
+            // Reusable MultiSelect Dropdown Component
+            class MultiSelectDropdown {
+            constructor(config) {
+                this.id = config.id;
+                this.items = config.items;
+                this.displayProperty = config.displayProperty;
+                this.placeholder = config.placeholder;
+                this.searchPlaceholder = config.searchPlaceholder;
+                this.onSelectionChange = config.onSelectionChange || (() => {});
+                this.selectedItems = new Set();
                 
-                option.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    toggleAuditSelection(audit.id);
+                this.dropdown = document.getElementById(`${this.id}-dropdown`);
+                this.selected = document.getElementById(`${this.id}-selected`);
+                this.optionsContainer = document.getElementById(`${this.id}-options-container`);
+                this.searchInput = document.getElementById(`${this.id}-search-input`);
+                this.multiselect = document.getElementById(`${this.id}-multiselect`);
+                
+                this.init();
+            }
+            
+            init() {
+                this.populateOptions();
+                this.setupEventListeners();
+            }
+            
+            populateOptions() {
+                this.items.forEach(item => {
+                    const option = document.createElement('div');
+                    option.className = 'filter-option';
+                    option.dataset.itemId = item.id;
+                    option.innerHTML = `
+                        <div class="filter-option-checkbox"></div>
+                        <span>${this.displayProperty(item)}</span>
+                    `;
+                    
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.toggleSelection(item.id);
+                    });
+                    
+                    this.optionsContainer.appendChild(option);
+                });
+            }
+            
+            setupEventListeners() {
+                // Search functionality
+                this.searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const options = this.optionsContainer.querySelectorAll('.filter-option');
+                    
+                    options.forEach(option => {
+                        const text = option.textContent.toLowerCase();
+                        option.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+                    });
                 });
                 
-                auditDropdown.appendChild(option);
-            });
-            
-            // Toggle dropdown
-            auditSelected.addEventListener('click', function() {
-                auditDropdown.classList.toggle('show');
-                this.classList.toggle('active');
-            });
-            
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!document.getElementById('audit-multiselect').contains(e.target)) {
-                    auditDropdown.classList.remove('show');
-                    auditSelected.classList.remove('active');
-                }
-            });
-        }
-
-        function toggleAuditSelection(auditId) {
-            const option = document.querySelector(`.audit-option[data-audit-id="${auditId}"]`);
-            
-            if (selectedAudits.has(auditId)) {
-                selectedAudits.delete(auditId);
-                option.classList.remove('selected');
-            } else {
-                selectedAudits.add(auditId);
-                option.classList.add('selected');
-            }
-            
-            updateAuditDisplay();
-            updateVisualization();
-        }
-
-        function updateAuditDisplay() {
-            const auditSelected = document.getElementById('audit-selected');
-            
-            if (selectedAudits.size === 0) {
-                auditSelected.innerHTML = '<span class="audit-placeholder">Select audits to filter...</span>';
-            } else {
-                const tags = Array.from(selectedAudits).map(auditId => {
-                    const audit = data.audits.find(a => a.id === auditId);
-                    return `
-                        <span class="audit-tag">
-                            ${audit.name}
-                            <span class="audit-tag-remove" onclick="removeAudit('${auditId}')">×</span>
-                        </span>
-                    `;
-                }).join('');
+                // Prevent search input from closing dropdown
+                this.searchInput.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
                 
-                auditSelected.innerHTML = `<div class="audit-selected-tags">${tags}</div>`;
+                // Toggle dropdown
+                this.selected.addEventListener('click', () => {
+                    // Close other dropdowns
+                    document.querySelectorAll('.filter-dropdown.show').forEach(dd => {
+                        if (dd !== this.dropdown) {
+                            dd.classList.remove('show');
+                            dd.previousElementSibling.classList.remove('active');
+                        }
+                    });
+                    
+                    this.dropdown.classList.toggle('show');
+                    this.selected.classList.toggle('active');
+                    
+                    // Focus search input when opening
+                    if (this.dropdown.classList.contains('show')) {
+                        setTimeout(() => this.searchInput.focus(), 100);
+                    }
+                });
+                
+                // Setup document click listener once
+                if (!MultiSelectDropdown.documentListenerSetup) {
+                    document.addEventListener('click', (e) => {
+                        document.querySelectorAll('.filter-multiselect').forEach(multiselect => {
+                            if (!multiselect.contains(e.target)) {
+                                const dropdown = multiselect.querySelector('.filter-dropdown');
+                                const selected = multiselect.querySelector('.filter-selected');
+                                const searchInput = multiselect.querySelector('.filter-search-input');
+                                const optionsContainer = multiselect.querySelector('.filter-options-container');
+                                
+                                if (dropdown && dropdown.classList.contains('show')) {
+                                    dropdown.classList.remove('show');
+                                    selected.classList.remove('active');
+                                    
+                                    // Clear search and reset visibility
+                                    if (searchInput) searchInput.value = '';
+                                    if (optionsContainer) {
+                                        optionsContainer.querySelectorAll('.filter-option').forEach(opt => {
+                                            opt.style.display = 'flex';
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                    });
+                    MultiSelectDropdown.documentListenerSetup = true;
+                }
+            }
+            
+            toggleSelection(itemId) {
+                const option = this.optionsContainer.querySelector(`[data-item-id="${itemId}"]`);
+                
+                if (this.selectedItems.has(itemId)) {
+                    this.selectedItems.delete(itemId);
+                    option.classList.remove('selected');
+                } else {
+                    this.selectedItems.add(itemId);
+                    option.classList.add('selected');
+                }
+                
+                this.updateDisplay();
+                this.onSelectionChange(this.selectedItems);
+            }
+            
+            updateDisplay() {
+                if (this.selectedItems.size === 0) {
+                    this.selected.innerHTML = `<span class="filter-placeholder">${this.placeholder}</span>`;
+                } else if (this.selectedItems.size === 1) {
+                    const itemId = Array.from(this.selectedItems)[0];
+                    const item = this.items.find(i => i.id === itemId);
+                    this.selected.innerHTML = `<span>${this.displayProperty(item)}</span>`;
+                } else {
+                    this.selected.innerHTML = `<span>${this.selectedItems.size} selected</span>`;
+                }
+            }
+            
+            getSelectedItems() {
+                return this.selectedItems;
+            }
+            
+            clearSelection() {
+                this.selectedItems.clear();
+                this.optionsContainer.querySelectorAll('.filter-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                this.updateDisplay();
+                this.onSelectionChange(this.selectedItems);
             }
         }
-
-        function removeAudit(auditId) {
-            selectedAudits.delete(auditId);
-            document.querySelector(`.audit-option[data-audit-id="${auditId}"]`).classList.remove('selected');
-            updateAuditDisplay();
-            updateVisualization();
+        
+        // Initialize multiselect filters using the reusable component
+        const auditDropdown = new MultiSelectDropdown({
+            id: 'audit',
+            items: data.audits,
+            displayProperty: (audit) => `${audit.name} - ${audit.status}`,
+            placeholder: 'Select audits...',
+            searchPlaceholder: 'Search audits...',
+            onSelectionChange: (selectedItems) => {
+                selectedAudits = selectedItems;
+                updateVisualization();
+                updateStats();
+            }
+        });
+        
+        const unitDropdown = new MultiSelectDropdown({
+            id: 'unit',
+            items: data.businessUnits,
+            displayProperty: (unit) => `${unit.name} (${unit.code})`,
+            placeholder: 'Select units...',
+            searchPlaceholder: 'Search units...',
+            onSelectionChange: (selectedItems) => {
+                selectedUnits = selectedItems;
+                updateVisualization();
+            }
+        });
+        
+        const standardDropdown = new MultiSelectDropdown({
+            id: 'standard',
+            items: data.standards,
+            displayProperty: (standard) => `${standard.name} - ${standard.category}`,
+            placeholder: 'Select standards...',
+            searchPlaceholder: 'Search standards...',
+            onSelectionChange: (selectedItems) => {
+                selectedStandards = selectedItems;
+                updateVisualization();
+            }
+        });
+        
+            // Initialize visualization after dropdowns are set up
+            if (typeof updateVisualization === 'function') {
+                updateVisualization();
+            }
         }
-
-        // Make removeAudit available globally for onclick
-        window.removeAudit = removeAudit;
 
         document.getElementById('risk-threshold').addEventListener('input', function() {
             document.getElementById('threshold-value').textContent = this.value;
