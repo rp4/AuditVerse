@@ -1379,8 +1379,8 @@
         <!-- Main Graph Area - Cockpit Window -->
         <main class="graph">
             <svg id="knowledge-graph"></svg>
-            <div class="axis-label x-axis-label">Likelihood →</div>
-            <div class="axis-label y-axis-label">Severity →</div>
+            <div class="axis-label x-axis-label">Likelihood</div>
+            <div class="axis-label y-axis-label">Severity</div>
             <div class="quadrant-label high-high">CRITICAL ZONE</div>
             <div class="quadrant-label low-low">ACCEPTABLE</div>
         </main>
@@ -1398,20 +1398,20 @@
                 </div>
                 <div class="metrics-grid">
                     <div class="metric-card">
-                        <div class="metric-label">Likelihood</div>
-                        <div class="metric-value" id="metric-likelihood">0</div>
+                        <div class="metric-label">Likelihood - Inherent</div>
+                        <div class="metric-value" id="metric-likelihood-inherent">0</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-label">Severity</div>
-                        <div class="metric-value" id="metric-severity">0</div>
+                        <div class="metric-label">Likelihood - Residual</div>
+                        <div class="metric-value" id="metric-likelihood-residual">0</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-label">Inherent</div>
-                        <div class="metric-value" id="metric-inherent">0</div>
+                        <div class="metric-label">Severity - Inherent</div>
+                        <div class="metric-value" id="metric-severity-inherent">0</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-label">Residual</div>
-                        <div class="metric-value" id="metric-residual">0</div>
+                        <div class="metric-label">Severity - Residual</div>
+                        <div class="metric-value" id="metric-severity-residual">0</div>
                     </div>
                 </div>
                 <div class="connections-list">
@@ -2065,26 +2065,12 @@
                     }
                 });
 
-            // Add trend indicators
-            riskNodeGroup.append('text')
-                .attr('text-anchor', 'middle')
-                .attr('dy', -5)
-                .attr('font-size', '20px')
-                .text(d => {
-                    if (d.trend === 'increasing') return '↑';
-                    if (d.trend === 'decreasing') return '↓';
-                    return '→';
-                })
-                .attr('fill', d => {
-                    if (d.trend === 'increasing') return '#ff0044';
-                    if (d.trend === 'decreasing') return '#00ff44';
-                    return '#ffaa00';
-                });
+            // Removed trend indicators for cleaner look
 
             // Add risk labels
             riskNodeGroup.append('text')
                 .attr('text-anchor', 'middle')
-                .attr('dy', 5)
+                .attr('dy', 0)
                 .attr('font-size', '12px')
                 .attr('fill', '#fff')
                 .text(d => d.name.substring(0, 15));
@@ -2112,20 +2098,7 @@
                 })
                 .on('mouseout', hideTooltip);
 
-            // Add icons for entity types
-            entityNodes.append('text')
-                .attr('text-anchor', 'middle')
-                .attr('dominant-baseline', 'middle')
-                .attr('font-size', '14px')
-                .text(d => {
-                    if (d.type === 'control') return '🛡️';
-                    if (d.type === 'audit') return '🔍';
-                    if (d.type === 'issue') return '⚠️';
-                    if (d.type === 'incident') return '🚨';
-                    if (d.type === 'entity') return '🏢';
-                    if (d.type === 'standard') return '📋';
-                    return '';
-                });
+            // Removed entity icons for cleaner visualization
 
             // Orbiting entity nodes
             const orbitingNodeGroups = nodeGroup.selectAll('.orbiting-node')
@@ -2150,16 +2123,7 @@
                 })
                 .on('mouseout', hideTooltip);
 
-            orbitingNodeGroups.append('text')
-                .attr('text-anchor', 'middle')
-                .attr('dominant-baseline', 'middle')
-                .attr('font-size', '12px')
-                .text(d => {
-                    if (d.type === 'control') return '🛡️';
-                    if (d.type === 'issue') return '⚠️';
-                    if (d.type === 'incident') return '🚨';
-                    return '';
-                });
+            // Removed orbiting node icons for cleaner visualization
 
             // Start orbit animation
             function animateOrbits() {
@@ -2472,13 +2436,10 @@
             document.getElementById('details-type').textContent = node.type.charAt(0).toUpperCase() + node.type.slice(1);
             
             if (node.type === 'risk') {
-                const likelihood = currentMode === 'inherent' ? node.inherent_likelihood : node.residual_likelihood;
-                const severity = currentMode === 'inherent' ? node.inherent_severity : node.residual_severity;
-                
-                document.getElementById('metric-likelihood').textContent = likelihood;
-                document.getElementById('metric-severity').textContent = severity;
-                document.getElementById('metric-inherent').textContent = node.inherent_rating;
-                document.getElementById('metric-residual').textContent = node.residual_rating;
+                document.getElementById('metric-likelihood-inherent').textContent = node.inherent_likelihood;
+                document.getElementById('metric-likelihood-residual').textContent = node.residual_likelihood;
+                document.getElementById('metric-severity-inherent').textContent = node.inherent_severity;
+                document.getElementById('metric-severity-residual').textContent = node.residual_severity;
                 
                 document.querySelector('.metrics-grid').style.display = 'grid';
             } else {
