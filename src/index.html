@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Risk Knowledge Graph | Starship Command Center</title>
+    <title>AuditVerse | Starship Command Center</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@300;400;600&display=swap');
@@ -14,19 +14,40 @@
             box-sizing: border-box;
         }
 
+        html {
+            background-color: #0c0c1a;
+            background-image: 
+                radial-gradient(2px 2px at 20% 30%, #ffffff, transparent),
+                radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 90% 40%, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 15% 40%, #ffffff, transparent),
+                radial-gradient(2px 2px at 50% 50%, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1px 1px at 25% 80%, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 75% 10%, rgba(255,255,255,0.7), transparent),
+                radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 10% 60%, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1px 1px at 35% 20%, rgba(255,255,255,0.9), transparent);
+            background-size: 550px 550px, 350px 350px, 250px 250px, 200px 200px, 300px 300px, 150px 150px, 100px 100px, 80px 80px, 120px 120px, 180px 180px;
+            background-repeat: repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            width: 100%;
+        }
+
         body {
             font-family: 'Rajdhani', sans-serif;
-            background: #000;
             color: #00ffcc;
-            overflow: hidden;
-            height: 100vh;
+            min-height: 100vh;
             position: relative;
+            margin: 0;
+            padding: 0;
+            background: transparent;
         }
 
         /* Main container */
         .container {
             width: 100vw;
-            height: 100vh;
+            min-height: 100vh;
             display: grid;
             grid-template-columns: 300px 1fr 350px;
             grid-template-rows: 100px 1fr 120px;
@@ -35,46 +56,70 @@
                 "controls graph details"
                 "timeline timeline timeline";
             gap: 2px;
-            background: #000;
+            background: transparent;
         }
 
-        /* Header */
+        /* Header - Command Deck Control Panel - Metallic */
         .header {
             grid-area: header;
-            background: linear-gradient(135deg, rgba(0,50,100,0.3), rgba(0,20,40,0.3));
-            border: 1px solid rgba(0,255,204,0.3);
+            background: #2a2a2f;
+            background-image: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(100,100,100,0.1) 40px, rgba(100,100,100,0.1) 41px);
+            border: 5px solid #4a4a4f;
+            border-style: groove;
+            border-bottom-width: 8px;
+            box-shadow: 
+                inset 0 -3px 10px rgba(0,0,0,0.8),
+                inset 0 3px 10px rgba(80,80,80,0.3),
+                0 5px 15px rgba(0,0,0,0.6);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 30px;
+            padding: 0 40px;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+        }
+
+        /* Metallic bolts for header */
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            width: 15px;
+            height: 15px;
+            background: #5a5a5f;
+            background-image: radial-gradient(circle at 30% 30%, #7a7a7f, #3a3a3f);
+            border-radius: 50%;
+            box-shadow: 
+                inset -2px -2px 3px rgba(0,0,0,0.9),
+                inset 2px 2px 3px rgba(160,160,160,0.3),
+                0 3px 5px rgba(0,0,0,0.6);
         }
 
         .header::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #00ffcc, transparent);
-            animation: scan 4s linear infinite;
-        }
-
-        @keyframes scan {
-            to { left: 100%; }
+            top: 15px;
+            right: 20px;
+            width: 15px;
+            height: 15px;
+            background: #5a5a5f;
+            background-image: radial-gradient(circle at 30% 30%, #7a7a7f, #3a3a3f);
+            border-radius: 50%;
+            box-shadow: 
+                inset -2px -2px 3px rgba(0,0,0,0.9),
+                inset 2px 2px 3px rgba(160,160,160,0.3),
+                0 3px 5px rgba(0,0,0,0.6);
         }
 
         .title {
             font-family: 'Orbitron', monospace;
             font-size: 2.5rem;
             font-weight: 900;
-            background: linear-gradient(45deg, #00ffcc, #ff00ff, #00ffcc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #00ffcc;
             text-transform: uppercase;
             letter-spacing: 5px;
+            text-shadow: 0 0 30px rgba(0,255,204,0.5);
         }
 
         .header-stats {
@@ -99,17 +144,229 @@
             color: #00ffcc;
         }
 
-        /* Control Panel */
+        /* Audit Filter Multiselect */
+        .audit-filter-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            z-index: 9999;
+        }
+
+        .audit-filter-label {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            color: #00ffcc;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+        }
+
+        .audit-multiselect {
+            position: relative;
+            min-width: 300px;
+            z-index: 9999;
+        }
+
+        .audit-selected {
+            background: rgba(0, 255, 204, 0.1);
+            border: 2px solid #00ffcc;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            min-height: 40px;
+        }
+
+        .audit-selected:hover {
+            background: rgba(0, 255, 204, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+        }
+
+        .audit-selected.active {
+            border-color: #ff00ff;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+        }
+
+        .audit-placeholder {
+            color: rgba(0, 255, 204, 0.5);
+            font-size: 0.9rem;
+        }
+
+        .audit-selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .audit-tag {
+            background: rgba(255, 0, 255, 0.2);
+            border: 1px solid #ff00ff;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.85rem;
+            color: #ff00ff;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .audit-tag-remove {
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .audit-tag-remove:hover {
+            opacity: 1;
+        }
+
+        .audit-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a1f;
+            border: 2px solid #00ffcc;
+            border-radius: 8px;
+            margin-top: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 10000;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .audit-dropdown.show {
+            display: block;
+        }
+
+        .audit-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.1);
+        }
+
+        .audit-option:last-child {
+            border-bottom: none;
+        }
+
+        .audit-option:hover {
+            background: rgba(0, 255, 204, 0.1);
+        }
+
+        .audit-option.selected {
+            background: rgba(255, 0, 255, 0.1);
+            color: #ff00ff;
+        }
+
+        .audit-option-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #00ffcc;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .audit-option.selected .audit-option-checkbox {
+            background: #ff00ff;
+            border-color: #ff00ff;
+        }
+
+        .audit-option.selected .audit-option-checkbox::after {
+            content: '✓';
+            color: #0c0c1a;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Control Panel - Left Console - Analog/Steampunk */
         .controls {
             grid-area: controls;
-            background: rgba(0,20,40,0.5);
-            border: 1px solid rgba(0,255,204,0.2);
+            background: #1a1a1f;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(100,100,100,0.1) 30px, rgba(100,100,100,0.1) 31px),
+                repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(100,100,100,0.1) 30px, rgba(100,100,100,0.1) 31px);
+            border: 4px solid #3a3a3f;
+            border-style: ridge;
             padding: 20px;
             overflow-y: auto;
+            position: relative;
+            box-shadow: 
+                inset -3px -3px 7px rgba(0,0,0,0.8),
+                inset 3px 3px 7px rgba(70,70,70,0.3),
+                0 0 5px rgba(0,0,0,0.5);
+        }
+
+        /* Metal rivets for control panel */
+        .controls::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 12px;
+            height: 12px;
+            background: #4a4a4f;
+            background-image: radial-gradient(circle at 30% 30%, #6a6a6f, #2a2a2f);
+            border-radius: 50%;
+            box-shadow: 
+                inset -1px -1px 2px rgba(0,0,0,0.8),
+                inset 1px 1px 2px rgba(150,150,150,0.3),
+                0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .controls::after {
+            content: '';
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 12px;
+            height: 12px;
+            background: #4a4a4f;
+            background-image: radial-gradient(circle at 30% 30%, #6a6a6f, #2a2a2f);
+            border-radius: 50%;
+            box-shadow: 
+                inset -1px -1px 2px rgba(0,0,0,0.8),
+                inset 1px 1px 2px rgba(150,150,150,0.3),
+                0 2px 4px rgba(0,0,0,0.5);
         }
 
         .control-section {
             margin-bottom: 25px;
+            padding: 15px;
+            background: #252528;
+            border: 2px solid #3a3a3f;
+            border-style: inset;
+            border-radius: 5px;
+            position: relative;
+            box-shadow: 
+                inset 2px 2px 5px rgba(0,0,0,0.5),
+                inset -1px -1px 3px rgba(60,60,60,0.3);
+        }
+        
+        .control-section::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 8px;
+            height: 8px;
+            background: #4a4a4f;
+            background-image: radial-gradient(circle at 30% 30%, #5a5a5f, #2a2a2f);
+            border-radius: 50%;
+            box-shadow: 
+                inset -1px -1px 1px rgba(0,0,0,0.8),
+                inset 1px 1px 1px rgba(120,120,120,0.3);
         }
 
         .control-title {
@@ -132,32 +389,64 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 10px;
-            background: rgba(0,255,204,0.05);
-            border: 1px solid rgba(0,255,204,0.2);
-            border-radius: 5px;
+            padding: 12px;
+            background: #2a2a2f;
+            border: 2px solid #3a3a3f;
+            border-style: outset;
+            border-radius: 3px;
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                2px 2px 4px rgba(0,0,0,0.5),
+                -1px -1px 2px rgba(60,60,60,0.3);
+        }
+        
+        .toggle-item::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #666;
+            background-image: radial-gradient(circle at center, #888, #444);
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
         }
 
         .toggle-item:hover {
-            background: rgba(0,255,204,0.1);
-            border-color: #00ffcc;
+            background: #323237;
+            border-color: #4a4a4f;
         }
 
         .toggle-item.active {
-            background: rgba(0,255,204,0.2);
-            border-color: #00ffcc;
-            box-shadow: 0 0 10px rgba(0,255,204,0.5);
+            background: #1f1f22;
+            border-style: inset;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0,0,0,0.5),
+                inset -1px -1px 2px rgba(60,60,60,0.3);
+        }
+        
+        .toggle-item.active::after {
+            background: #00ffcc;
+            background-image: radial-gradient(circle at 30% 30%, #00ffcc, #00aa99);
+            box-shadow: 0 0 5px rgba(0,255,204,0.5);
         }
 
+        /* Analog toggle switch */
         .toggle-checkbox {
             width: 40px;
             height: 20px;
-            background: rgba(0,255,204,0.2);
-            border-radius: 10px;
+            background: #1a1a1f;
+            border: 2px solid #3a3a3f;
+            border-style: inset;
+            border-radius: 3px;
             position: relative;
             transition: all 0.3s;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .toggle-checkbox::after {
@@ -165,41 +454,81 @@
             position: absolute;
             top: 2px;
             left: 2px;
-            width: 16px;
-            height: 16px;
-            background: #00ffcc;
-            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            background: #5a5a5f;
+            background-image: radial-gradient(circle at 30% 30%, #7a7a7f, #3a3a3f);
+            border-radius: 2px;
             transition: all 0.3s;
+            box-shadow: 
+                1px 1px 2px rgba(0,0,0,0.5),
+                inset -1px -1px 1px rgba(0,0,0,0.3);
         }
 
         .toggle-item.active .toggle-checkbox {
-            background: rgba(0,255,204,0.5);
+            background: #0a2a2a;
+            border-color: #00ffcc;
         }
 
         .toggle-item.active .toggle-checkbox::after {
             left: 22px;
+            background: #00ffcc;
+            background-image: radial-gradient(circle at 30% 30%, #00ffcc, #00aa99);
+            box-shadow: 
+                1px 1px 2px rgba(0,0,0,0.5),
+                0 0 8px rgba(0,255,204,0.6);
         }
 
         .entity-filter {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px;
-            background: rgba(0,255,204,0.05);
-            border: 1px solid rgba(0,255,204,0.2);
-            border-radius: 5px;
-            margin-bottom: 8px;
+            padding: 10px;
+            background: #2a2a2f;
+            border: 2px solid #3a3a3f;
+            border-style: outset;
+            border-radius: 3px;
+            margin-bottom: 10px;
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
+            box-shadow: 
+                2px 2px 4px rgba(0,0,0,0.5),
+                -1px -1px 2px rgba(60,60,60,0.3);
+        }
+        
+        .entity-filter::before {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: #4a4a4f;
+            background-image: radial-gradient(circle at center, #5a5a5f, #2a2a2f);
+            border-radius: 50%;
+            transition: all 0.3s;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        .entity-filter.active::before {
+            background: #00ffcc;
+            background-image: radial-gradient(circle at 30% 30%, #00ffcc, #00aa99);
+            box-shadow: 0 0 5px rgba(0,255,204,0.5);
         }
 
         .entity-filter:hover {
-            background: rgba(0,255,204,0.1);
+            background: #323237;
+            border-color: #4a4a4f;
         }
 
         .entity-filter.active {
-            background: rgba(0,255,204,0.2);
-            border-color: #00ffcc;
+            background: #1f1f22;
+            border-style: inset;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0,0,0,0.5),
+                inset -1px -1px 2px rgba(60,60,60,0.3);
         }
 
         .entity-icon {
@@ -222,33 +551,107 @@
             font-size: 0.9rem;
         }
 
+        /* Analog slider track */
         .slider {
             width: 100%;
-            height: 6px;
-            background: rgba(0,255,204,0.2);
-            border-radius: 3px;
+            height: 8px;
+            background: #1a1a1f;
+            border: 1px solid #2a2a2f;
+            border-style: inset;
+            border-radius: 2px;
             outline: none;
             -webkit-appearance: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #00ffcc;
+            width: 24px;
+            height: 24px;
+            background: #5a5a5f;
+            background-image: 
+                radial-gradient(circle at 30% 30%, #7a7a7f, #3a3a3f),
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 3px);
+            border: 2px solid #4a4a4f;
+            border-style: outset;
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(0,255,204,0.8);
+            box-shadow: 
+                2px 2px 4px rgba(0,0,0,0.6),
+                -1px -1px 2px rgba(90,90,90,0.3);
+        }
+        
+        .slider::-webkit-slider-thumb:active {
+            border-style: inset;
+            box-shadow: 
+                inset 1px 1px 2px rgba(0,0,0,0.6),
+                inset -1px -1px 1px rgba(90,90,90,0.3);
         }
 
-        /* Main Graph Area */
+        /* Main Graph Area - Starship Cockpit Window */
         .graph {
             grid-area: graph;
-            background: radial-gradient(ellipse at center, rgba(0,20,40,0.3), transparent),
-                        linear-gradient(180deg, #000, rgba(0,10,20,0.8));
-            border: 1px solid rgba(0,255,204,0.2);
+            background: transparent;
+            border: none;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        
+        /* Cockpit window frame - removed for infinite space */
+        
+        /* Cockpit glass effect - removed for infinite space */
+        
+        /* Cockpit frame details - removed for infinite space */
+
+        /* HUD overlay - removed for infinite space */
+        
+        /* Targeting reticle */
+        .targeting-reticle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 1px solid rgba(0,255,204,0.2);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: reticle-pulse 3s ease-in-out infinite;
+        }
+        
+        .targeting-reticle::before,
+        .targeting-reticle::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid rgba(0,255,204,0.15);
+            border-radius: 50%;
+        }
+        
+        .targeting-reticle::before {
+            width: 150px;
+            height: 150px;
+        }
+        
+        .targeting-reticle::after {
+            width: 100px;
+            height: 100px;
+        }
+        
+        @keyframes reticle-pulse {
+            0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        /* Cockpit HUD grid lines - removed for infinite space */
+        
+        @keyframes grid-scan {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 50px 50px, 50px 50px; }
         }
 
         #knowledge-graph {
@@ -301,13 +704,55 @@
             color: #00ff44;
         }
 
-        /* Details Panel */
+        /* Details Panel - Right Console - Analog/Steampunk */
         .details {
             grid-area: details;
-            background: rgba(0,20,40,0.5);
-            border: 1px solid rgba(0,255,204,0.2);
+            background: #1a1a1f;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(100,100,100,0.1) 30px, rgba(100,100,100,0.1) 31px),
+                repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(100,100,100,0.1) 30px, rgba(100,100,100,0.1) 31px);
+            border: 4px solid #3a3a3f;
+            border-style: ridge;
             padding: 20px;
             overflow-y: auto;
+            position: relative;
+            box-shadow: 
+                inset 3px -3px 7px rgba(0,0,0,0.8),
+                inset -3px 3px 7px rgba(70,70,70,0.3),
+                0 0 5px rgba(0,0,0,0.5);
+        }
+
+        /* Metal rivets for details panel */
+        .details::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            background: #4a4a4f;
+            background-image: radial-gradient(circle at 30% 30%, #6a6a6f, #2a2a2f);
+            border-radius: 50%;
+            box-shadow: 
+                inset -1px -1px 2px rgba(0,0,0,0.8),
+                inset 1px 1px 2px rgba(150,150,150,0.3),
+                0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .details::after {
+            content: '';
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            background: #4a4a4f;
+            background-image: radial-gradient(circle at 30% 30%, #6a6a6f, #2a2a2f);
+            border-radius: 50%;
+            box-shadow: 
+                inset -1px -1px 2px rgba(0,0,0,0.8),
+                inset 1px 1px 2px rgba(150,150,150,0.3),
+                0 2px 4px rgba(0,0,0,0.5);
         }
 
         .details-empty {
@@ -346,10 +791,25 @@
         }
 
         .metric-card {
-            background: rgba(0,255,204,0.05);
-            border: 1px solid rgba(0,255,204,0.2);
-            border-radius: 5px;
-            padding: 10px;
+            background: 
+                linear-gradient(135deg, rgba(0,20,40,0.4) 0%, rgba(0,0,0,0.6) 100%),
+                radial-gradient(ellipse at top right, rgba(0,255,204,0.1), transparent);
+            border: 1px solid rgba(0,255,204,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, rgba(0,255,204,0.2), transparent);
+            border-radius: 50%;
         }
 
         .metric-label {
@@ -384,15 +844,58 @@
             background: rgba(0,255,204,0.1);
         }
 
-        /* Timeline */
+        /* Timeline - Navigation Command Console - Heavy Metal */
         .timeline {
             grid-area: timeline;
-            background: rgba(0,20,40,0.5);
-            border: 1px solid rgba(0,255,204,0.2);
+            background: #2a2a2f;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(100,100,100,0.1) 40px, rgba(100,100,100,0.1) 41px),
+                repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(80,80,80,0.05) 20px, rgba(80,80,80,0.05) 21px);
+            border: 5px solid #4a4a4f;
+            border-style: groove;
+            border-top-width: 8px;
             display: flex;
             align-items: center;
-            padding: 20px;
+            padding: 20px 40px;
             gap: 20px;
+            position: relative;
+            box-shadow: 
+                inset 0 3px 10px rgba(0,0,0,0.8),
+                inset 0 -3px 10px rgba(80,80,80,0.3),
+                0 -5px 15px rgba(0,0,0,0.6);
+        }
+
+        /* Metal bolts across timeline */
+        .timeline::before {
+            content: '';
+            position: absolute;
+            bottom: 15px;
+            left: 20px;
+            width: 15px;
+            height: 15px;
+            background: #5a5a5f;
+            background-image: radial-gradient(circle at 30% 30%, #7a7a7f, #3a3a3f);
+            border-radius: 50%;
+            box-shadow: 
+                inset -2px -2px 3px rgba(0,0,0,0.9),
+                inset 2px 2px 3px rgba(160,160,160,0.3),
+                0 3px 5px rgba(0,0,0,0.6);
+        }
+        
+        .timeline::after {
+            content: '';
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            width: 15px;
+            height: 15px;
+            background: #5a5a5f;
+            background-image: radial-gradient(circle at 30% 30%, #7a7a7f, #3a3a3f);
+            border-radius: 50%;
+            box-shadow: 
+                inset -2px -2px 3px rgba(0,0,0,0.9),
+                inset 2px 2px 3px rgba(160,160,160,0.3),
+                0 3px 5px rgba(0,0,0,0.6);
         }
 
         .timeline-controls {
@@ -401,38 +904,97 @@
             align-items: center;
         }
 
+        /* Metallic button styling */
         .btn {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(0,255,204,0.2));
-            border: 1px solid #00ffcc;
+            padding: 12px 24px;
+            background: #3a3a3f;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(80,80,80,0.1) 3px, rgba(80,80,80,0.1) 4px);
+            border: 3px solid #4a4a4f;
+            border-style: outset;
+            border-radius: 3px;
             color: #00ffcc;
             font-family: 'Orbitron', monospace;
             font-size: 0.9rem;
             text-transform: uppercase;
             cursor: pointer;
             transition: all 0.3s;
-            border-radius: 5px;
+            position: relative;
+            box-shadow: 
+                3px 3px 6px rgba(0,0,0,0.6),
+                -1px -1px 3px rgba(80,80,80,0.3),
+                inset 0 0 2px rgba(0,0,0,0.2);
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 6px;
+            height: 6px;
+            background: #5a5a5f;
+            background-image: radial-gradient(circle at center, #666, #333);
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
         }
 
         .btn:hover {
-            background: linear-gradient(135deg, rgba(0,255,204,0.3), rgba(0,255,204,0.4));
-            box-shadow: 0 0 20px rgba(0,255,204,0.5);
-            transform: translateY(-2px);
+            background: #424247;
+            border-color: #5a5a5f;
+            transform: translateY(-1px);
+            box-shadow: 
+                4px 4px 8px rgba(0,0,0,0.7),
+                -1px -1px 3px rgba(90,90,90,0.3);
+        }
+        
+        .btn:active {
+            border-style: inset;
+            transform: translateY(1px);
+            box-shadow: 
+                inset 2px 2px 4px rgba(0,0,0,0.6),
+                inset -1px -1px 2px rgba(80,80,80,0.3);
         }
 
         .btn.active {
+            background: #2a2a2f;
+            border-style: inset;
+            color: #00ffcc;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0,0,0,0.6),
+                inset -1px -1px 2px rgba(60,60,60,0.3);
+        }
+        
+        .btn.active::before {
             background: #00ffcc;
-            color: #000;
+            background-image: radial-gradient(circle at 30% 30%, #00ffcc, #00aa99);
+            box-shadow: 0 0 5px rgba(0,255,204,0.5);
         }
 
         .btn-icon {
             padding: 10px;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
+            background: #2a2a2f;
+            border: 4px solid #3a3a3f;
+            border-style: outset;
+            border-radius: 50%;
+            box-shadow: 
+                3px 3px 6px rgba(0,0,0,0.7),
+                -1px -1px 3px rgba(70,70,70,0.3),
+                inset 0 0 3px rgba(0,0,0,0.3);
+        }
+        
+        .btn-icon:active {
+            border-style: inset;
+            transform: translateY(1px);
+            box-shadow: 
+                inset 2px 2px 4px rgba(0,0,0,0.7),
+                inset -1px -1px 2px rgba(70,70,70,0.3);
         }
 
         .timeline-slider {
@@ -440,18 +1002,63 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            padding: 10px;
+            background: #1a1a1f;
+            border: 2px solid #3a3a3f;
+            border-style: inset;
+            border-radius: 3px;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0,0,0,0.5),
+                inset -1px -1px 2px rgba(60,60,60,0.3);
         }
 
         .timeline-display {
             font-family: 'Orbitron', monospace;
             font-size: 1.1rem;
             min-width: 150px;
+            padding: 8px 12px;
+            background: #1a1a1f;
+            border: 2px solid #3a3a3f;
+            border-style: inset;
+            border-radius: 3px;
+            color: #00ffcc;
+            text-align: center;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0,0,0,0.5),
+                inset -1px -1px 2px rgba(60,60,60,0.3);
         }
 
         .speed-control {
             display: flex;
             align-items: center;
             gap: 10px;
+            padding: 8px;
+            background: #252528;
+            border: 2px solid #3a3a3f;
+            border-style: inset;
+            border-radius: 3px;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0,0,0,0.5),
+                inset -1px -1px 2px rgba(60,60,60,0.3);
+        }
+        
+        .speed-control select {
+            background: #2a2a2f;
+            color: #00ffcc;
+            border: 2px solid #3a3a3f;
+            border-style: outset;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-family: 'Orbitron', monospace;
+            cursor: pointer;
+            box-shadow: 
+                1px 1px 3px rgba(0,0,0,0.5),
+                -1px -1px 2px rgba(60,60,60,0.3);
+        }
+        
+        .speed-control select:focus {
+            outline: none;
+            border-color: #4a4a4f;
         }
 
         /* Graph elements */
@@ -583,6 +1190,16 @@
             filter: drop-shadow(0 0 5px #00ff99);
         }
 
+        .entity-standard {
+            fill: #9966ff;
+            filter: drop-shadow(0 0 5px #9966ff);
+        }
+
+        .entity-audit {
+            fill: #ff00ff;
+            filter: drop-shadow(0 0 5px #ff00ff);
+        }
+
         /* Orbit paths */
         .orbit-path {
             animation: rotate 60s linear infinite;
@@ -663,7 +1280,18 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1 class="title">Risk Knowledge Graph</h1>
+            <h1 class="title">AuditVerse</h1>
+            <div class="audit-filter-container">
+                <label class="audit-filter-label">Select Audits:</label>
+                <div class="audit-multiselect" id="audit-multiselect">
+                    <div class="audit-selected" id="audit-selected">
+                        <span class="audit-placeholder">Select audits to filter...</span>
+                    </div>
+                    <div class="audit-dropdown" id="audit-dropdown">
+                        <!-- Audit options will be populated here -->
+                    </div>
+                </div>
+            </div>
             <div class="header-stats">
                 <div class="stat-item">
                     <div class="stat-label">Total Risks</div>
@@ -706,10 +1334,6 @@
                     <div class="entity-icon" style="background: #00ccff;">🛡️</div>
                     <span>Controls</span>
                 </div>
-                <div class="entity-filter active" data-entity="audits">
-                    <div class="entity-icon" style="background: #ff00ff;">🔍</div>
-                    <span>Audits</span>
-                </div>
                 <div class="entity-filter active" data-entity="issues">
                     <div class="entity-icon" style="background: #ffff00;">⚠️</div>
                     <span>Issues</span>
@@ -721,6 +1345,14 @@
                 <div class="entity-filter active" data-entity="entities">
                     <div class="entity-icon" style="background: #00ff99;">🏢</div>
                     <span>Business Units</span>
+                </div>
+                <div class="entity-filter active" data-entity="standards">
+                    <div class="entity-icon" style="background: #9966ff;">📋</div>
+                    <span>Standards</span>
+                </div>
+                <div class="entity-filter active" data-entity="audits">
+                    <div class="entity-icon" style="background: #ff00ff;">🔍</div>
+                    <span>Audits</span>
                 </div>
             </div>
 
@@ -765,7 +1397,7 @@
             </div>
         </aside>
 
-        <!-- Main Graph Area -->
+        <!-- Main Graph Area - Cockpit Window -->
         <main class="graph">
             <svg id="knowledge-graph"></svg>
             <div class="axis-label x-axis-label">Likelihood →</div>
@@ -913,7 +1545,13 @@
                 { id: 'I001', title: 'Weak Passwords', severity: 'High', status: 'Open' },
                 { id: 'I002', title: 'Missing Documentation', severity: 'Medium', status: 'In Progress' },
                 { id: 'I003', title: 'Outdated Software', severity: 'High', status: 'Open' },
-                { id: 'I004', title: 'Training Gaps', severity: 'Low', status: 'Closed' }
+                { id: 'I004', title: 'Training Gaps', severity: 'Low', status: 'Closed' },
+                { id: 'I005', title: 'Inadequate Access Controls', severity: 'Critical', status: 'Open', multiRisk: true },
+                { id: 'I006', title: 'Poor Vendor Oversight', severity: 'High', status: 'Open', multiRisk: true },
+                { id: 'I007', title: 'Insufficient Monitoring', severity: 'High', status: 'In Progress', multiRisk: true },
+                { id: 'I008', title: 'Data Classification Issues', severity: 'Medium', status: 'Open', multiRisk: true },
+                { id: 'I009', title: 'Business Continuity Planning Gaps', severity: 'High', status: 'Open', multiRisk: true },
+                { id: 'I010', title: 'Third-Party Integration Vulnerabilities', severity: 'Critical', status: 'Open', multiRisk: true }
             ],
             
             incidents: [
@@ -928,6 +1566,15 @@
                 { id: 'E003', name: 'Operations', type: 'Department' },
                 { id: 'E004', name: 'Legal', type: 'Department' },
                 { id: 'E005', name: 'HR', type: 'Department' }
+            ],
+            
+            standards: [
+                { id: 'S001', name: 'ISO 27001', type: 'Security', description: 'Information Security Management' },
+                { id: 'S002', name: 'GDPR', type: 'Privacy', description: 'General Data Protection Regulation' },
+                { id: 'S003', name: 'SOC 2', type: 'Compliance', description: 'Service Organization Control 2' },
+                { id: 'S004', name: 'PCI DSS', type: 'Payment', description: 'Payment Card Industry Data Security Standard' },
+                { id: 'S005', name: 'NIST CSF', type: 'Framework', description: 'NIST Cybersecurity Framework' },
+                { id: 'S006', name: 'COBIT', type: 'Governance', description: 'Control Objectives for IT' }
             ],
             
             relationships: [
@@ -957,6 +1604,37 @@
                 { source: 'R002', target: 'I002', type: 'causes', strength: 0.6 },
                 { source: 'R008', target: 'I004', type: 'causes', strength: 0.5 },
                 
+                // Multi-risk issues connections
+                // I005 - Inadequate Access Controls (affects Data Breach, IP Theft, Financial Fraud)
+                { source: 'R001', target: 'I005', type: 'causes', strength: 0.95 },
+                { source: 'R007', target: 'I005', type: 'causes', strength: 0.9 },
+                { source: 'R004', target: 'I005', type: 'causes', strength: 0.85 },
+                
+                // I006 - Poor Vendor Oversight (affects Supply Chain, Regulatory, Data Breach)
+                { source: 'R003', target: 'I006', type: 'causes', strength: 0.9 },
+                { source: 'R002', target: 'I006', type: 'causes', strength: 0.8 },
+                { source: 'R001', target: 'I006', type: 'causes', strength: 0.7 },
+                
+                // I007 - Insufficient Monitoring (affects System Downtime, Data Breach, Financial Fraud)
+                { source: 'R005', target: 'I007', type: 'causes', strength: 0.85 },
+                { source: 'R001', target: 'I007', type: 'causes', strength: 0.8 },
+                { source: 'R004', target: 'I007', type: 'causes', strength: 0.75 },
+                
+                // I008 - Data Classification Issues (affects Data Breach, Regulatory, IP Theft)
+                { source: 'R001', target: 'I008', type: 'causes', strength: 0.8 },
+                { source: 'R002', target: 'I008', type: 'causes', strength: 0.75 },
+                { source: 'R007', target: 'I008', type: 'causes', strength: 0.7 },
+                
+                // I009 - Business Continuity Planning Gaps (affects System Downtime, Supply Chain, Reputation)
+                { source: 'R005', target: 'I009', type: 'causes', strength: 0.9 },
+                { source: 'R003', target: 'I009', type: 'causes', strength: 0.85 },
+                { source: 'R006', target: 'I009', type: 'causes', strength: 0.8 },
+                
+                // I010 - Third-Party Integration Vulnerabilities (affects Data Breach, System Downtime, Supply Chain)
+                { source: 'R001', target: 'I010', type: 'causes', strength: 0.9 },
+                { source: 'R005', target: 'I010', type: 'causes', strength: 0.85 },
+                { source: 'R003', target: 'I010', type: 'causes', strength: 0.8 },
+                
                 // Risk-Incident relationships
                 { source: 'R001', target: 'IN001', type: 'realized_in', strength: 0.9 },
                 { source: 'R001', target: 'IN003', type: 'realized_in', strength: 0.95 },
@@ -968,7 +1646,30 @@
                 { source: 'R003', target: 'E003', type: 'owned_by', strength: 1.0 },
                 { source: 'R004', target: 'E002', type: 'owned_by', strength: 1.0 },
                 { source: 'R005', target: 'E001', type: 'owned_by', strength: 1.0 },
-                { source: 'R008', target: 'E005', type: 'owned_by', strength: 1.0 }
+                { source: 'R008', target: 'E005', type: 'owned_by', strength: 1.0 },
+                
+                // Risk-Standards relationships (multiple risks can require same standards)
+                { source: 'R001', target: 'S001', type: 'requires', strength: 0.9 }, // Data Breach requires ISO 27001
+                { source: 'R001', target: 'S002', type: 'requires', strength: 0.95 }, // Data Breach requires GDPR
+                { source: 'R001', target: 'S005', type: 'requires', strength: 0.85 }, // Data Breach requires NIST CSF
+                { source: 'R002', target: 'S002', type: 'requires', strength: 0.9 }, // Regulatory requires GDPR
+                { source: 'R002', target: 'S003', type: 'requires', strength: 0.8 }, // Regulatory requires SOC 2
+                { source: 'R004', target: 'S004', type: 'requires', strength: 0.95 }, // Financial Fraud requires PCI DSS
+                { source: 'R004', target: 'S003', type: 'requires', strength: 0.8 }, // Financial Fraud requires SOC 2
+                { source: 'R005', target: 'S006', type: 'requires', strength: 0.7 }, // System Downtime requires COBIT
+                { source: 'R005', target: 'S001', type: 'requires', strength: 0.75 }, // System Downtime requires ISO 27001
+                { source: 'R007', target: 'S001', type: 'requires', strength: 0.85 }, // IP Theft requires ISO 27001
+                { source: 'R007', target: 'S005', type: 'requires', strength: 0.8 }, // IP Theft requires NIST CSF
+                
+                // Risk-Audit relationships (audits assess multiple risks)
+                { source: 'R001', target: 'A001', type: 'assessed_by', strength: 0.9 },
+                { source: 'R002', target: 'A002', type: 'assessed_by', strength: 0.8 },
+                { source: 'R003', target: 'A004', type: 'assessed_by', strength: 0.7 },
+                { source: 'R004', target: 'A003', type: 'assessed_by', strength: 0.85 },
+                { source: 'R005', target: 'A001', type: 'assessed_by', strength: 0.8 },
+                { source: 'R007', target: 'A001', type: 'assessed_by', strength: 0.75 }, // IP Theft also assessed by IT Security Audit
+                { source: 'R006', target: 'A002', type: 'assessed_by', strength: 0.7 }, // Reputation also assessed by Compliance Review
+                { source: 'R008', target: 'A004', type: 'assessed_by', strength: 0.65 } // Talent Loss also assessed by Operations Assessment
             ]
         };
 
@@ -977,7 +1678,8 @@
         let simulation;
         let currentMode = 'residual';
         let selectedNode = null;
-        let activeFilters = new Set(['controls', 'audits', 'issues', 'incidents', 'entities']);
+        let activeFilters = new Set(['controls', 'issues', 'incidents', 'entities', 'standards', 'audits']);
+        let selectedAudits = new Set();
         let animationInterval = null;
         let timelineValue = 0;
 
@@ -1031,8 +1733,116 @@
             updateStats();
         }
 
-        // Draw background grid
+        // Draw background grid and cosmic elements
         function drawGrid() {
+            // Add cosmic gradient background
+            const defs = svg.select('defs').size() > 0 ? svg.select('defs') : svg.append('defs');
+            
+            // Create nebula gradient
+            const nebulaGradient = defs.append('radialGradient')
+                .attr('id', 'nebulaGradient')
+                .attr('cx', '85%')
+                .attr('cy', '15%')
+                .attr('r', '120%');
+            
+            nebulaGradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', 'rgba(220, 53, 69, 0.3)')
+                .attr('stop-opacity', 1);
+            
+            nebulaGradient.append('stop')
+                .attr('offset', '25%')
+                .attr('stop-color', 'rgba(255, 107, 107, 0.2)')
+                .attr('stop-opacity', 1);
+            
+            nebulaGradient.append('stop')
+                .attr('offset', '50%')
+                .attr('stop-color', 'rgba(255, 193, 7, 0.15)')
+                .attr('stop-opacity', 1);
+            
+            nebulaGradient.append('stop')
+                .attr('offset', '75%')
+                .attr('stop-color', 'rgba(32, 201, 151, 0.1)')
+                .attr('stop-opacity', 1);
+            
+            nebulaGradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', 'rgba(116, 185, 255, 0.05)')
+                .attr('stop-opacity', 1);
+
+            // Add cosmic gradient
+            const cosmicGradient = defs.append('radialGradient')
+                .attr('id', 'cosmicGradient')
+                .attr('cx', '20%')
+                .attr('cy', '80%')
+                .attr('r', '80%');
+            
+            cosmicGradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', 'rgba(138, 43, 226, 0.15)')
+                .attr('stop-opacity', 1);
+            
+            cosmicGradient.append('stop')
+                .attr('offset', '50%')
+                .attr('stop-color', 'rgba(30, 60, 114, 0.1)')
+                .attr('stop-opacity', 1);
+            
+            cosmicGradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', 'transparent')
+                .attr('stop-opacity', 0);
+
+            // Add gradient backgrounds
+            g.insert('rect', ':first-child')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('fill', 'url(#nebulaGradient)');
+                
+            g.insert('rect', ':first-child')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('fill', 'url(#cosmicGradient)')
+                .attr('opacity', 0.7);
+
+            // Create animated stars
+            const starsGroup = g.insert('g', ':first-child').attr('class', 'stars');
+            
+            // Generate random stars
+            for (let i = 0; i < 100; i++) {
+                const star = starsGroup.append('circle')
+                    .attr('cx', Math.random() * width)
+                    .attr('cy', Math.random() * height)
+                    .attr('r', Math.random() * 1.5 + 0.5)
+                    .attr('fill', 'white')
+                    .attr('opacity', Math.random() * 0.8 + 0.2);
+                
+                // Animate twinkling
+                star.transition()
+                    .duration(Math.random() * 3000 + 2000)
+                    .attr('opacity', Math.random() * 0.3 + 0.1)
+                    .transition()
+                    .duration(Math.random() * 3000 + 2000)
+                    .attr('opacity', Math.random() * 0.8 + 0.2)
+                    .on('end', function repeat() {
+                        d3.select(this)
+                            .transition()
+                            .duration(Math.random() * 3000 + 2000)
+                            .attr('opacity', Math.random() * 0.3 + 0.1)
+                            .transition()
+                            .duration(Math.random() * 3000 + 2000)
+                            .attr('opacity', Math.random() * 0.8 + 0.2)
+                            .on('end', repeat);
+                    });
+            }
+
+            // Add shooting star effect
+            setInterval(() => {
+                if (Math.random() < 0.3) {
+                    createShootingStar();
+                }
+            }, 4000);
+
+            // Grid overlay
             const gridGroup = g.append('g').attr('class', 'grid');
 
             // Vertical lines
@@ -1056,6 +1866,30 @@
             }
         }
 
+        // Create shooting star animation
+        function createShootingStar() {
+            const startX = Math.random() * width;
+            const startY = Math.random() * height * 0.3;
+            const endX = startX + (Math.random() * 200 + 100);
+            const endY = startY + (Math.random() * 100 + 50);
+            
+            const star = g.append('line')
+                .attr('x1', startX)
+                .attr('y1', startY)
+                .attr('x2', startX)
+                .attr('y2', startY)
+                .attr('stroke', 'white')
+                .attr('stroke-width', 2)
+                .attr('opacity', 0.8);
+            
+            star.transition()
+                .duration(1500)
+                .attr('x2', endX)
+                .attr('y2', endY)
+                .attr('opacity', 0)
+                .remove();
+        }
+
         // Update visualization based on current settings
         function updateVisualization() {
             // Clear previous elements
@@ -1064,7 +1898,7 @@
             g.selectAll('.orbits').remove();
 
             // Get current risk positions
-            const riskNodes = data.risks.map(r => ({
+            let riskNodes = data.risks.map(r => ({
                 ...r,
                 x: currentMode === 'inherent' ? 
                     (r.inherent_likelihood / 10) * width : 
@@ -1079,153 +1913,194 @@
             // Create risk lookup for orbiting entities
             const riskById = new Map(riskNodes.map(r => [r.id, r]));
 
+            // Filter entities based on selected audits
+            let allowedEntities = null;
+            if (selectedAudits.size > 0) {
+                allowedEntities = new Set();
+                
+                // Find all entities connected to selected audits
+                data.relationships.forEach(rel => {
+                    if (selectedAudits.has(rel.source) || selectedAudits.has(rel.target)) {
+                        // Add both source and target to allowed entities
+                        allowedEntities.add(rel.source);
+                        allowedEntities.add(rel.target);
+                        
+                        // Also add entities connected to these entities (2-hop connection)
+                        data.relationships.forEach(rel2 => {
+                            if (rel2.source === rel.source || rel2.source === rel.target ||
+                                rel2.target === rel.source || rel2.target === rel.target) {
+                                allowedEntities.add(rel2.source);
+                                allowedEntities.add(rel2.target);
+                            }
+                        });
+                    }
+                });
+                
+                // Remove selected audit IDs from allowed entities (we don't want to show them as nodes)
+                selectedAudits.forEach(auditId => allowedEntities.delete(auditId));
+                
+                // Filter risk nodes based on allowed entities
+                riskNodes = riskNodes.filter(risk => allowedEntities.has(risk.id));
+            }
+
             // Prepare other nodes
             const otherNodes = [];
             const allNodes = [...riskNodes];
             const orbitingNodes = [];
 
-            // Add controls - these will orbit around their risks
-            if (activeFilters.has('controls')) {
-                data.controls.forEach((c, i) => {
-                    // Find which risk this control relates to
-                    const relationship = data.relationships.find(r => 
-                        r.target === c.id && r.type === 'mitigates'
-                    );
+            // Helper function to position nodes based on their risk connections
+            function positionNodeByRiskConnections(item, itemType, relationshipType, radius, index) {
+                // Find all risks this item relates to
+                const relationships = data.relationships.filter(r => 
+                    r.target === item.id && r.type === relationshipType
+                );
+                
+                const connectedRisks = relationships
+                    .map(r => riskById.get(r.source))
+                    .filter(r => r);
+                
+                if (connectedRisks.length > 1) {
+                    // Multi-risk item - position at centroid of connected risks
+                    const centroidX = connectedRisks.reduce((sum, r) => sum + r.x, 0) / connectedRisks.length;
+                    const centroidY = connectedRisks.reduce((sum, r) => sum + r.y, 0) / connectedRisks.length;
                     
-                    if (relationship && riskById.has(relationship.source)) {
-                        const risk = riskById.get(relationship.source);
-                        const angle = (i * Math.PI / 3) % (Math.PI * 2);
-                        const orbitRadius = 40;
-                        const node = {
-                            ...c,
-                            type: 'control',
-                            parentRisk: risk.id,
-                            orbitRadius: orbitRadius,
-                            angle: angle,
-                            x: risk.x + Math.cos(angle) * orbitRadius,
-                            y: risk.y + Math.sin(angle) * orbitRadius,
-                            radius: 12
-                        };
-                        orbitingNodes.push(node);
-                        allNodes.push(node);
-                    } else {
-                        // Orphan controls - place them in a corner
-                        const node = {
-                            ...c,
-                            type: 'control',
-                            x: 50 + (i % 3) * 30,
-                            y: height - 100 + Math.floor(i / 3) * 30,
-                            radius: 12
-                        };
-                        otherNodes.push(node);
-                        allNodes.push(node);
-                    }
-                });
+                    return {
+                        ...item,
+                        type: itemType,
+                        multiRisk: true,
+                        connectedRisks: connectedRisks.map(r => r.id),
+                        x: centroidX,
+                        y: centroidY,
+                        fx: centroidX, // Fixed position
+                        fy: centroidY, // Fixed position
+                        radius: radius + 2, // Slightly larger for multi-risk items
+                        pulseEffect: true
+                    };
+                } else if (connectedRisks.length === 1) {
+                    // Single risk item - position near that risk
+                    const risk = connectedRisks[0];
+                    const angleOffset = itemType === 'control' ? 0 : 
+                                       itemType === 'issue' ? Math.PI / 2 :
+                                       itemType === 'incident' ? Math.PI :
+                                       itemType === 'entity' ? Math.PI * 1.5 :
+                                       itemType === 'standard' ? Math.PI / 4 :
+                                       itemType === 'audit' ? Math.PI * 1.25 : 0;
+                    const angle = angleOffset + (index * Math.PI / 4) % (Math.PI * 2);
+                    const distance = 45;
+                    
+                    return {
+                        ...item,
+                        type: itemType,
+                        connectedRisks: [risk.id],
+                        x: risk.x + Math.cos(angle) * distance,
+                        y: risk.y + Math.sin(angle) * distance,
+                        fx: risk.x + Math.cos(angle) * distance,
+                        fy: risk.y + Math.sin(angle) * distance,
+                        radius: radius
+                    };
+                } else {
+                    // Unconnected item - place in a corner
+                    const cornerX = itemType === 'control' ? 50 :
+                                   itemType === 'issue' ? 100 :
+                                   itemType === 'incident' ? width - 100 :
+                                   itemType === 'entity' ? width - 50 :
+                                   itemType === 'standard' ? 150 :
+                                   itemType === 'audit' ? width - 150 : 200;
+                    const cornerY = height - 50;
+                    
+                    return {
+                        ...item,
+                        type: itemType,
+                        x: cornerX + (index % 3) * 30,
+                        y: cornerY - Math.floor(index / 3) * 30,
+                        radius: radius
+                    };
+                }
             }
 
-            // Add audits - positioned along the top axis
-            if (activeFilters.has('audits')) {
-                data.audits.forEach((a, i) => {
-                    const node = {
-                        ...a,
-                        type: 'audit',
-                        x: (width / (data.audits.length + 1)) * (i + 1),
-                        y: 40,
-                        radius: 15
-                    };
+            // Add controls
+            if (activeFilters.has('controls')) {
+                data.controls.forEach((control, i) => {
+                    // Check if this control should be shown based on audit filter
+                    if (allowedEntities && !allowedEntities.has(control.id)) {
+                        return; // Skip this control if not connected to selected audits
+                    }
+                    
+                    const node = positionNodeByRiskConnections(control, 'control', 'mitigates', 12, i);
                     otherNodes.push(node);
                     allNodes.push(node);
                 });
             }
 
-            // Add issues - these will orbit around their risks
+            // Audits are now handled through the filter in the header, not as nodes
+
+            // Add issues
             if (activeFilters.has('issues')) {
                 data.issues.forEach((issue, i) => {
-                    // Find which risk this issue relates to
-                    const relationship = data.relationships.find(r => 
-                        r.target === issue.id && r.type === 'causes'
-                    );
-                    
-                    if (relationship && riskById.has(relationship.source)) {
-                        const risk = riskById.get(relationship.source);
-                        const angle = (Math.PI / 2) + (i * Math.PI / 2) % (Math.PI * 2);
-                        const orbitRadius = 55;
-                        const node = {
-                            ...issue,
-                            type: 'issue',
-                            parentRisk: risk.id,
-                            orbitRadius: orbitRadius,
-                            angle: angle,
-                            x: risk.x + Math.cos(angle) * orbitRadius,
-                            y: risk.y + Math.sin(angle) * orbitRadius,
-                            radius: 10
-                        };
-                        orbitingNodes.push(node);
-                        allNodes.push(node);
-                    } else {
-                        // Unlinked issues
-                        const node = {
-                            ...issue,
-                            type: 'issue',
-                            x: 50 + (i % 2) * 30,
-                            y: height - 50 + Math.floor(i / 2) * 30,
-                            radius: 10
-                        };
-                        otherNodes.push(node);
-                        allNodes.push(node);
+                    // Check if this issue should be shown based on audit filter
+                    if (allowedEntities && !allowedEntities.has(issue.id)) {
+                        return; // Skip this issue if not connected to selected audits
                     }
+                    
+                    const node = positionNodeByRiskConnections(issue, 'issue', 'causes', 10, i);
+                    // Preserve the multiRisk flag from original data if it exists
+                    if (issue.multiRisk) node.multiRisk = true;
+                    otherNodes.push(node);
+                    allNodes.push(node);
                 });
             }
 
-            // Add incidents - these will orbit around their risks
+            // Add incidents
             if (activeFilters.has('incidents')) {
-                data.incidents.forEach((inc, i) => {
-                    // Find which risk this incident relates to
-                    const relationship = data.relationships.find(r => 
-                        r.target === inc.id && r.type === 'realized_in'
-                    );
-                    
-                    if (relationship && riskById.has(relationship.source)) {
-                        const risk = riskById.get(relationship.source);
-                        const angle = Math.PI + (i * Math.PI / 3) % (Math.PI * 2);
-                        const orbitRadius = 70;
-                        const node = {
-                            ...inc,
-                            type: 'incident',
-                            parentRisk: risk.id,
-                            orbitRadius: orbitRadius,
-                            angle: angle,
-                            x: risk.x + Math.cos(angle) * orbitRadius,
-                            y: risk.y + Math.sin(angle) * orbitRadius,
-                            radius: 11
-                        };
-                        orbitingNodes.push(node);
-                        allNodes.push(node);
-                    } else {
-                        // Unlinked incidents
-                        const node = {
-                            ...inc,
-                            type: 'incident',
-                            x: width - 50 - i * 30,
-                            y: height - 50,
-                            radius: 11
-                        };
-                        otherNodes.push(node);
-                        allNodes.push(node);
+                data.incidents.forEach((incident, i) => {
+                    // Check if this incident should be shown based on audit filter
+                    if (allowedEntities && !allowedEntities.has(incident.id)) {
+                        return; // Skip this incident if not connected to selected audits
                     }
+                    
+                    const node = positionNodeByRiskConnections(incident, 'incident', 'realized_in', 11, i);
+                    otherNodes.push(node);
+                    allNodes.push(node);
                 });
             }
 
-            // Add entities - positioned along the right axis
+            // Add entities
             if (activeFilters.has('entities')) {
-                data.entities.forEach((e, i) => {
-                    const node = {
-                        ...e,
-                        type: 'entity',
-                        x: width - 40,
-                        y: (height / (data.entities.length + 1)) * (i + 1),
-                        radius: 18
-                    };
+                data.entities.forEach((entity, i) => {
+                    // Check if this entity should be shown based on audit filter
+                    if (allowedEntities && !allowedEntities.has(entity.id)) {
+                        return; // Skip this entity if not connected to selected audits
+                    }
+                    
+                    const node = positionNodeByRiskConnections(entity, 'entity', 'owned_by', 18, i);
+                    otherNodes.push(node);
+                    allNodes.push(node);
+                });
+            }
+
+            // Add standards
+            if (activeFilters.has('standards')) {
+                data.standards.forEach((standard, i) => {
+                    // Check if this standard should be shown based on audit filter
+                    if (allowedEntities && !allowedEntities.has(standard.id)) {
+                        return; // Skip this standard if not connected to selected audits
+                    }
+                    
+                    const node = positionNodeByRiskConnections(standard, 'standard', 'requires', 15, i);
+                    otherNodes.push(node);
+                    allNodes.push(node);
+                });
+            }
+
+            // Add audits  
+            if (activeFilters.has('audits')) {
+                data.audits.forEach((audit, i) => {
+                    // Check if this audit should be shown based on audit filter
+                    if (allowedEntities && !allowedEntities.has(audit.id)) {
+                        return; // Skip this audit if not connected to selected audits
+                    }
+                    
+                    const node = positionNodeByRiskConnections(audit, 'audit', 'assessed_by', 16, i);
                     otherNodes.push(node);
                     allNodes.push(node);
                 });
@@ -1266,12 +2141,37 @@
             // Create force simulation for non-orbiting nodes only
             simulation = d3.forceSimulation([...otherNodes])
                 .force('link', d3.forceLink(links.filter(l => 
-                    !l.source.parentRisk && !l.target.parentRisk &&
-                    l.source.type !== 'risk' && l.target.type !== 'risk'))
+                    !l.source.parentRisk && !l.target.parentRisk))
                     .id(d => d.id)
-                    .distance(50))
-                .force('charge', d3.forceManyBody().strength(-50))
-                .force('collision', d3.forceCollide().radius(d => d.radius + 5));
+                    .distance(d => {
+                        // Very short distance for entity-risk connections
+                        if ((d.source.type === 'entity' && d.target.type === 'risk') ||
+                            (d.source.type === 'risk' && d.target.type === 'entity')) {
+                            return 30; // Reduced from 80 to allow entities to be right next to risks
+                        }
+                        return 50;
+                    })
+                    .strength(d => {
+                        // Much stronger pull for entity-risk connections
+                        if ((d.source.type === 'entity' && d.target.type === 'risk') ||
+                            (d.source.type === 'risk' && d.target.type === 'entity')) {
+                            return 2; // Increased from 1.5 for stronger attraction
+                        }
+                        return 1;
+                    }))
+                .force('charge', d3.forceManyBody()
+                    .strength(d => {
+                        // Reduced repulsion for entities to allow them closer to risks
+                        if (d.type === 'entity') return -30; // Reduced from -100
+                        if (d.type === 'risk') return -80; // Reduced from -150
+                        return -50;
+                    }))
+                .force('collision', d3.forceCollide().radius(d => {
+                    // Smaller collision radius for entities to allow closer positioning
+                    if (d.type === 'entity') return d.radius + 2; // Reduced padding
+                    return d.radius + 5; // Normal padding for others
+                }))
+                .force('center', d3.forceCenter(width / 2, height / 2).strength(0.02)); // Reduced center force
 
             // Draw links
             const linkGroup = g.append('g').attr('class', 'links');
@@ -1287,6 +2187,7 @@
                     if (d.type === 'causes') return '#ffff00';
                     if (d.type === 'realized_in') return '#ff0099';
                     if (d.type === 'owned_by') return '#00ff99';
+                    if (d.type === 'requires') return '#9966ff';
                     return '#00ffcc';
                 })
                 .attr('stroke-width', d => d.strength * 3)
@@ -1368,12 +2269,17 @@
                 .attr('transform', d => `translate(${d.x},${d.y})`);
 
             entityNodes.append('circle')
-                .attr('class', d => `entity-node entity-${d.type}`)
+                .attr('class', d => `entity-node entity-${d.type} ${d.pulseEffect ? 'pulse' : ''}`)
                 .attr('r', d => d.radius)
                 .attr('fill-opacity', 0.8)
+                .attr('stroke', d => d.multiRisk ? '#ff00ff' : 'none')
+                .attr('stroke-width', d => d.multiRisk ? 2 : 0)
                 .on('click', (event, d) => selectNode(d))
                 .on('mouseover', function(event, d) {
-                    showTooltip(event, `${d.name || d.title || d.description}<br>Type: ${d.type}`);
+                    const tooltipText = d.multiRisk 
+                        ? `${d.name || d.title || d.description}<br>Type: Multi-Risk ${d.type}<br>Affects: ${d.connectedRisks ? d.connectedRisks.join(', ') : 'Multiple Risks'}`
+                        : `${d.name || d.title || d.description}<br>Type: ${d.type}`;
+                    showTooltip(event, tooltipText);
                 })
                 .on('mouseout', hideTooltip);
 
@@ -1388,6 +2294,7 @@
                     if (d.type === 'issue') return '⚠️';
                     if (d.type === 'incident') return '🚨';
                     if (d.type === 'entity') return '🏢';
+                    if (d.type === 'standard') return '📋';
                     return '';
                 });
 
@@ -1400,12 +2307,17 @@
                 .attr('transform', d => `translate(${d.x},${d.y})`);
 
             orbitingNodeGroups.append('circle')
-                .attr('class', d => `entity-node entity-${d.type}`)
+                .attr('class', d => `entity-node entity-${d.type} ${d.pulseEffect ? 'pulse' : ''}`)
                 .attr('r', d => d.radius)
                 .attr('fill-opacity', 0.8)
+                .attr('stroke', d => d.multiRisk ? '#ff00ff' : 'none')
+                .attr('stroke-width', d => d.multiRisk ? 2 : 0)
                 .on('click', (event, d) => selectNode(d))
                 .on('mouseover', function(event, d) {
-                    showTooltip(event, `${d.name || d.title || d.description}<br>Type: ${d.type}<br>Orbiting: ${d.parentRisk}`);
+                    const tooltipText = d.multiRisk 
+                        ? `${d.name || d.title || d.description}<br>Type: Multi-Risk ${d.type}<br>Affects: ${d.connectedRisks ? d.connectedRisks.join(', ') : 'Multiple Risks'}`
+                        : `${d.name || d.title || d.description}<br>Type: ${d.type}<br>Orbiting: ${d.parentRisk}`;
+                    showTooltip(event, tooltipText);
                 })
                 .on('mouseout', hideTooltip);
 
@@ -1423,8 +2335,8 @@
             // Start orbit animation
             function animateOrbits() {
                 orbitingNodes.forEach(node => {
-                    node.angle += 0.01; // Rotation speed
-                    if (node.angle > Math.PI * 2) node.angle -= Math.PI * 2;
+                    // node.angle += 0.01; // Rotation speed - DISABLED to stop orbiting
+                    // if (node.angle > Math.PI * 2) node.angle -= Math.PI * 2;
                     
                     const risk = riskById.get(node.parentRisk);
                     if (risk) {
@@ -1498,6 +2410,54 @@
 
             // Update positions on simulation tick for non-orbiting nodes
             simulation.on('tick', () => {
+                otherNodes.forEach(node => {
+                    // Keep all nodes with connectedRisks fixed at their calculated positions
+                    if (node.connectedRisks) {
+                        const connectedRiskNodes = node.connectedRisks.map(rId => riskById.get(rId)).filter(r => r);
+                        if (connectedRiskNodes.length > 1) {
+                            // Multi-risk node - stay at centroid
+                            const centroidX = connectedRiskNodes.reduce((sum, r) => sum + r.x, 0) / connectedRiskNodes.length;
+                            const centroidY = connectedRiskNodes.reduce((sum, r) => sum + r.y, 0) / connectedRiskNodes.length;
+                            node.fx = centroidX;
+                            node.fy = centroidY;
+                            node.x = centroidX;
+                            node.y = centroidY;
+                        } else if (connectedRiskNodes.length === 1) {
+                            // Single risk node - maintain fixed offset from risk
+                            const risk = connectedRiskNodes[0];
+                            // Find the item's index in its original array for consistent angle calculation
+                            let itemIndex = 0;
+                            if (node.type === 'control') {
+                                itemIndex = data.controls.findIndex(c => c.id === node.id);
+                            } else if (node.type === 'issue') {
+                                itemIndex = data.issues.findIndex(i => i.id === node.id);
+                            } else if (node.type === 'incident') {
+                                itemIndex = data.incidents.findIndex(i => i.id === node.id);
+                            } else if (node.type === 'entity') {
+                                itemIndex = data.entities.findIndex(e => e.id === node.id);
+                            } else if (node.type === 'standard') {
+                                itemIndex = data.standards.findIndex(s => s.id === node.id);
+                            } else if (node.type === 'audit') {
+                                itemIndex = data.audits.findIndex(a => a.id === node.id);
+                            }
+                            
+                            const angleOffset = node.type === 'control' ? 0 : 
+                                               node.type === 'issue' ? Math.PI / 2 :
+                                               node.type === 'incident' ? Math.PI :
+                                               node.type === 'entity' ? Math.PI * 1.5 :
+                                               node.type === 'standard' ? Math.PI / 4 :
+                                               node.type === 'audit' ? Math.PI * 1.25 : 0;
+                            const angle = angleOffset + (itemIndex * Math.PI / 4) % (Math.PI * 2);
+                            const distance = 45;
+                            
+                            node.fx = risk.x + Math.cos(angle) * distance;
+                            node.fy = risk.y + Math.sin(angle) * distance;
+                            node.x = node.fx;
+                            node.y = node.fy;
+                        }
+                    }
+                });
+                
                 entityNodes
                     .attr('transform', d => `translate(${d.x},${d.y})`);
             });
@@ -1826,6 +2786,91 @@
                 updateVisualization();
             });
         });
+
+        // Initialize audit multiselect filter
+        initializeAuditFilter();
+
+        function initializeAuditFilter() {
+            const auditDropdown = document.getElementById('audit-dropdown');
+            const auditSelected = document.getElementById('audit-selected');
+            
+            // Populate audit options
+            data.audits.forEach(audit => {
+                const option = document.createElement('div');
+                option.className = 'audit-option';
+                option.dataset.auditId = audit.id;
+                option.innerHTML = `
+                    <div class="audit-option-checkbox"></div>
+                    <span>${audit.name} - ${audit.status}</span>
+                `;
+                
+                option.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleAuditSelection(audit.id);
+                });
+                
+                auditDropdown.appendChild(option);
+            });
+            
+            // Toggle dropdown
+            auditSelected.addEventListener('click', function() {
+                auditDropdown.classList.toggle('show');
+                this.classList.toggle('active');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!document.getElementById('audit-multiselect').contains(e.target)) {
+                    auditDropdown.classList.remove('show');
+                    auditSelected.classList.remove('active');
+                }
+            });
+        }
+
+        function toggleAuditSelection(auditId) {
+            const option = document.querySelector(`.audit-option[data-audit-id="${auditId}"]`);
+            
+            if (selectedAudits.has(auditId)) {
+                selectedAudits.delete(auditId);
+                option.classList.remove('selected');
+            } else {
+                selectedAudits.add(auditId);
+                option.classList.add('selected');
+            }
+            
+            updateAuditDisplay();
+            updateVisualization();
+        }
+
+        function updateAuditDisplay() {
+            const auditSelected = document.getElementById('audit-selected');
+            
+            if (selectedAudits.size === 0) {
+                auditSelected.innerHTML = '<span class="audit-placeholder">Select audits to filter...</span>';
+            } else {
+                const tags = Array.from(selectedAudits).map(auditId => {
+                    const audit = data.audits.find(a => a.id === auditId);
+                    return `
+                        <span class="audit-tag">
+                            ${audit.name}
+                            <span class="audit-tag-remove" onclick="removeAudit('${auditId}')">×</span>
+                        </span>
+                    `;
+                }).join('');
+                
+                auditSelected.innerHTML = `<div class="audit-selected-tags">${tags}</div>`;
+            }
+        }
+
+        function removeAudit(auditId) {
+            selectedAudits.delete(auditId);
+            document.querySelector(`.audit-option[data-audit-id="${auditId}"]`).classList.remove('selected');
+            updateAuditDisplay();
+            updateVisualization();
+        }
+
+        // Make removeAudit available globally for onclick
+        window.removeAudit = removeAudit;
 
         document.getElementById('risk-threshold').addEventListener('input', function() {
             document.getElementById('threshold-value').textContent = this.value;
