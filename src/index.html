@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AuditVerse | Starship Command Center</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' text-anchor='middle' font-size='80' dy='.35em'>🌌</text></svg>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@300;400;600&display=swap');
@@ -156,17 +157,18 @@
         
         .filter-group {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            flex-direction: column;
+            gap: 5px;
             position: relative;
         }
         
         .filter-label {
             font-family: 'Orbitron', monospace;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: #00ffcc;
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-bottom: 2px;
             opacity: 0.8;
             white-space: nowrap;
         }
@@ -517,12 +519,10 @@
         /* Control Panel - Left Console - Analog/Steampunk */
         .controls {
             grid-area: controls;
-            background: #1a1a1f;
-            background-image: 
-                repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(100,100,100,0.1) 30px, rgba(100,100,100,0.1) 31px),
-                repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(100,100,100,0.1) 30px, rgba(100,100,100,0.1) 31px);
-            border: 4px solid #3a3a3f;
-            border-style: ridge;
+            background: #2a2a2f;
+            background-image: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(100,100,100,0.1) 40px, rgba(100,100,100,0.1) 41px);
+            border: 5px solid #4a4a4f;
+            border-style: groove;
             padding: 20px;
             overflow-y: auto;
             position: relative;
@@ -939,12 +939,10 @@
         /* Details Panel - Right Console - Analog/Steampunk */
         .details {
             grid-area: details;
-            background: #1a1a1f;
-            background-image: 
-                repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(100,100,100,0.1) 30px, rgba(100,100,100,0.1) 31px),
-                repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(100,100,100,0.1) 30px, rgba(100,100,100,0.1) 31px);
-            border: 4px solid #3a3a3f;
-            border-style: ridge;
+            background: #2a2a2f;
+            background-image: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(100,100,100,0.1) 40px, rgba(100,100,100,0.1) 41px);
+            border: 5px solid #4a4a4f;
+            border-style: groove;
             padding: 20px;
             overflow-y: auto;
             position: relative;
@@ -1288,6 +1286,24 @@
                 -1px -1px 2px rgba(60,60,60,0.3);
         }
         
+        /* Ensure all select dropdowns have dark theme */
+        select {
+            background-color: #1a1a2e !important;
+        }
+        
+        select option {
+            background-color: #1a1a2e !important;
+            color: #00ffcc !important;
+            padding: 4px 8px;
+        }
+        
+        select option:hover,
+        select option:focus,
+        select option:checked {
+            background-color: rgba(0, 255, 204, 0.2) !important;
+            color: #00ffcc !important;
+        }
+        
         .speed-control select:focus {
             outline: none;
             border-color: #4a4a4f;
@@ -1502,7 +1518,6 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1 class="title">AuditVerse</h1>
             <div class="filters-container">
                 <!-- Audits Filter -->
                 <div class="filter-group">
@@ -1569,6 +1584,28 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Risk Type Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">Risk Type:</label>
+                    <div class="filter-multiselect" id="risk-type-multiselect">
+                        <div class="filter-selected" id="risk-type-selected">
+                            <span class="filter-placeholder">Select risk types...</span>
+                        </div>
+                        <div class="filter-dropdown" id="risk-type-dropdown">
+                            <div class="filter-search-container">
+                                <input type="text" class="filter-search-input" id="risk-type-search-input" placeholder="Search risk types...">
+                            </div>
+                            <div class="filter-select-buttons">
+                                <button class="filter-select-btn" id="risk-type-select-all">Select All</button>
+                                <button class="filter-select-btn" id="risk-type-deselect-all">Deselect All</button>
+                            </div>
+                            <div class="filter-options-container" id="risk-type-options-container">
+                                <!-- Risk type options will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="header-stats">
                 <div class="stat-item">
@@ -1594,6 +1631,25 @@
                     <div class="toggle-item" data-mode="toggle-risk">
                         <div class="toggle-checkbox"></div>
                         <span id="risk-mode-label">Residual Risk (with controls)</span>
+                    </div>
+                </div>
+                
+                <!-- Preset Views Dropdown -->
+                <div class="view-preset-container" style="margin-top: 15px;">
+                    <label class="filter-label" style="display: block; margin-bottom: 8px; font-family: 'Orbitron', monospace; font-size: 0.75rem; color: #00ffcc; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">Preset Views:</label>
+                    <div class="filter-multiselect" style="min-width: 100%;">
+                        <div class="filter-selected" id="preset-selected" style="background: rgba(0, 255, 204, 0.1); border: 2px solid #00ffcc; border-radius: 8px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease; min-height: 36px; font-size: 0.85rem;" 
+                             onmouseover="this.style.background='rgba(0, 255, 204, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 255, 204, 0.3)'" 
+                             onmouseout="this.style.background='rgba(0, 255, 204, 0.1)'; this.style.boxShadow='none'">
+                            <select id="view-preset-select" style="background: transparent; border: none; color: #00ffcc; font-size: 0.85rem; font-family: 'Rajdhani', sans-serif; cursor: pointer; outline: none; width: 100%;">
+                                <option value="default" style="background: #1a1a2e; color: #00ffcc;">Default View</option>
+                                <option value="uncovered-risks" style="background: #1a1a2e; color: #00ffcc;">Uncovered Risks (No Audits)</option>
+                                <option value="high-risk-only" style="background: #1a1a2e; color: #00ffcc;">High Risk Only</option>
+                                <option value="recent-incidents" style="background: #1a1a2e; color: #00ffcc;">Recent Incidents</option>
+                                <option value="no-controls" style="background: #1a1a2e; color: #00ffcc;">Risks Without Controls</option>
+                                <option value="audit-gaps" style="background: #1a1a2e; color: #00ffcc;">Audit Coverage Gaps</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1955,8 +2011,10 @@
         let currentMode = 'residual';
         let selectedNode = null;
         let activeFilters = new Set(['controls', 'issues', 'incidents', 'entities', 'standards', 'audits']);
+        let riskTypes = [];
         let animationInterval = null;
         let timelineValue = 0;
+        let isAnimating = false; // Prevent multiple animations
 
         // Initialize the visualization
         function init() {
@@ -2009,6 +2067,9 @@
             
             // Initialize dropdowns after D3 is ready
             initializeDropdowns();
+            
+            // Initialize preset views dropdown
+            initializePresetViews();
         }
 
         // Draw background (stars and grid removed for cleaner visualization)
@@ -2048,12 +2109,14 @@
             const noAuditsSelected = selectedAudits.size === 0;
             const noUnitsSelected = selectedUnits.size === 0;
             const noStandardsSelected = selectedStandards.size === 0;
+            const noRiskTypesSelected = selectedRiskTypes.size === 0;
             const allAuditsSelected = selectedAudits.size === data.audits.length;
             const allUnitsSelected = selectedUnits.size === data.businessUnits.length;
             const allStandardsSelected = selectedStandards.size === data.standards.length;
+            const allRiskTypesSelected = selectedRiskTypes.size === riskTypes.length;
             
             // If all items in all categories are selected, show everything
-            if (allAuditsSelected && allUnitsSelected && allStandardsSelected) {
+            if (allAuditsSelected && allUnitsSelected && allStandardsSelected && allRiskTypesSelected) {
                 // Show all entities
                 data.risks.forEach(risk => allowedEntities.add(risk.id));
                 data.relationships.forEach(rel => {
@@ -2065,6 +2128,7 @@
                 let auditEntities = null;
                 let unitEntities = null;
                 let standardEntities = null;
+                let riskTypeEntities = null;
                 
                 // Handle Audits filter
                 if (noAuditsSelected) {
@@ -2196,6 +2260,29 @@
                         });
                     }
                     
+                // Handle Risk Type filter
+                if (noRiskTypesSelected) {
+                    // Show all risks when no risk types are selected
+                    riskTypeEntities = new Set();
+                    data.risks.forEach(risk => {
+                        riskTypeEntities.add(risk.id);
+                    });
+                } else if (!allRiskTypesSelected) {
+                    // Show only risks of selected types
+                    riskTypeEntities = new Set();
+                    data.risks.forEach(risk => {
+                        if (selectedRiskTypes.has(risk.category)) {
+                            riskTypeEntities.add(risk.id);
+                            // Add all entities connected to this risk
+                            data.relationships.forEach(rel => {
+                                if (rel.source === risk.id || rel.target === risk.id) {
+                                    riskTypeEntities.add(rel.source);
+                                    riskTypeEntities.add(rel.target);
+                                }
+                            });
+                        }
+                    });
+                }
                 
                 // Combine filters - need to handle all, some, or none selected for each type
                 let sets = [];
@@ -2204,6 +2291,7 @@
                 if (auditEntities !== null) sets.push(auditEntities);
                 if (unitEntities !== null) sets.push(unitEntities);
                 if (standardEntities !== null) sets.push(standardEntities);
+                if (riskTypeEntities !== null) sets.push(riskTypeEntities);
                 
                 if (sets.length === 0) {
                     // All filters show everything - no filtering needed
@@ -2715,72 +2803,142 @@
 
         // Animate transition between inherent and residual
         function animateTransition() {
-            const duration = 2000;
+            // Prevent concurrent animations
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            const duration = 1200;
+            const fadeOutDuration = 200;
+            const fadeInDuration = 200;
             
             // Use currentMode as the target mode (it's already been set in the click handler)
             const targetMode = currentMode;
             
-            // Animate risk positions
-            g.selectAll('.risk-node-group')
-                .transition()
-                .duration(duration)
-                .attr('transform', d => {
-                    const x = targetMode === 'inherent' ? 
-                        (d.inherent_likelihood / 10) * width : 
-                        (d.residual_likelihood / 10) * width;
-                    const y = height - (targetMode === 'inherent' ? 
-                        (d.inherent_severity / 10) * height : 
-                        (d.residual_severity / 10) * height);
-                    
-                    // Update the risk position in data for orbiting nodes
-                    d.x = x;
-                    d.y = y;
-                    
-                    return `translate(${x},${y})`;
-                });
-
-            // Animate risk sizes and colors
-            g.selectAll('.risk-node')
-                .transition()
-                .duration(duration)
-                .attr('r', d => {
-                    const rating = targetMode === 'inherent' ? d.inherent_rating : d.residual_rating;
-                    return Math.sqrt(rating * 100);
-                })
-                .attr('class', d => {
-                    const rating = targetMode === 'inherent' ? d.inherent_rating : d.residual_rating;
-                    return `risk-node ${getRiskClass(rating)}`;
-                });
-
-            // Animate orbit paths
-            g.selectAll('.orbit-path')
-                .transition()
-                .duration(duration)
-                .attr('cx', function(d, i) {
-                    const riskIndex = Math.floor(i / 3);
-                    const risk = data.risks[riskIndex];
-                    if (risk) {
-                        return targetMode === 'inherent' ? 
-                            (risk.inherent_likelihood / 10) * width : 
-                            (risk.residual_likelihood / 10) * width;
-                    }
-                    return 0;
-                })
-                .attr('cy', function(d, i) {
-                    const riskIndex = Math.floor(i / 3);
-                    const risk = data.risks[riskIndex];
-                    if (risk) {
-                        return height - (targetMode === 'inherent' ? 
-                            (risk.inherent_severity / 10) * height : 
-                            (risk.residual_severity / 10) * height);
-                    }
-                    return 0;
-                });
-
-            // After animation, refresh to ensure orbiting nodes are correctly positioned
+            // Step 1: Fade out entity nodes and links smoothly
+            g.selectAll('.entity-node, .orbiting-node-group')
+                .transition('fadeOut')
+                .duration(fadeOutDuration)
+                .style('opacity', 0);
+            
+            g.selectAll('.link')
+                .transition('fadeOut')
+                .duration(fadeOutDuration)
+                .style('opacity', 0);
+            
+            // Step 2: Move risks and orbits after a short delay
             setTimeout(() => {
-                updateVisualization();
-            }, duration);
+                // Animate risk positions smoothly
+                g.selectAll('.risk-node-group')
+                    .transition('move')
+                    .duration(duration)
+                    .ease(d3.easeCubicInOut)
+                    .attr('transform', d => {
+                        const x = targetMode === 'inherent' ? 
+                            (d.inherent_likelihood / 10) * width : 
+                            (d.residual_likelihood / 10) * width;
+                        const y = height - (targetMode === 'inherent' ? 
+                            (d.inherent_severity / 10) * height : 
+                            (d.residual_severity / 10) * height);
+                        
+                        // Update position for later use
+                        d.x = x;
+                        d.y = y;
+                        
+                        return `translate(${x},${y})`;
+                    });
+
+                // Animate risk sizes and colors
+                g.selectAll('.risk-node')
+                    .transition('resize')
+                    .duration(duration)
+                    .ease(d3.easeCubicInOut)
+                    .attr('r', d => {
+                        const rating = targetMode === 'inherent' ? d.inherent_rating : d.residual_rating;
+                        return Math.sqrt(rating * 100);
+                    })
+                    .attr('class', d => {
+                        const rating = targetMode === 'inherent' ? d.inherent_rating : d.residual_rating;
+                        return `risk-node ${getRiskClass(rating)}`;
+                    });
+
+                // Move orbit paths smoothly
+                g.selectAll('.orbit-path')
+                    .transition('moveOrbit')
+                    .duration(duration)
+                    .ease(d3.easeCubicInOut)
+                    .attr('cx', function(d, i) {
+                        const riskIndex = Math.floor(i / 3);
+                        const risk = data.risks[riskIndex];
+                        if (risk) {
+                            return targetMode === 'inherent' ? 
+                                (risk.inherent_likelihood / 10) * width : 
+                                (risk.residual_likelihood / 10) * width;
+                        }
+                        return d3.select(this).attr('cx');
+                    })
+                    .attr('cy', function(d, i) {
+                        const riskIndex = Math.floor(i / 3);
+                        const risk = data.risks[riskIndex];
+                        if (risk) {
+                            return height - (targetMode === 'inherent' ? 
+                                (risk.inherent_severity / 10) * height : 
+                                (risk.residual_severity / 10) * height);
+                        }
+                        return d3.select(this).attr('cy');
+                    });
+            }, fadeOutDuration);
+
+            // Step 3: Wait for risks to finish moving, then recreate entities
+            setTimeout(() => {
+                // First ensure everything is completely hidden by interrupting any transitions
+                g.selectAll('.entity-node, .orbiting-node-group')
+                    .interrupt()
+                    .style('opacity', 0);
+                g.selectAll('.link')
+                    .interrupt()
+                    .style('opacity', 0);
+                
+                // Small delay to ensure opacity is applied before updating
+                requestAnimationFrame(() => {
+                    // Update the visualization to reposition entities (while invisible)
+                    updateVisualization();
+                    
+                    // Force new elements to start invisible
+                    g.selectAll('.entity-node, .orbiting-node-group')
+                        .style('opacity', 0);
+                    g.selectAll('.link')
+                        .style('opacity', 0);
+                    
+                    // Wait for next frame, then fade in
+                    requestAnimationFrame(() => {
+                        g.selectAll('.entity-node, .orbiting-node-group')
+                            .transition('fadeIn')
+                            .duration(fadeInDuration)
+                            .style('opacity', d => {
+                                // Controls less visible in inherent mode
+                                if (d && d.type === 'control' && targetMode === 'inherent') {
+                                    return 0.2;
+                                }
+                                return 1;
+                            });
+                    
+                    g.selectAll('.link')
+                        .transition('fadeIn')
+                        .duration(fadeInDuration)
+                        .style('opacity', d => {
+                            // Mitigation links less visible in inherent mode
+                            if (d && d.type === 'mitigates' && targetMode === 'inherent') {
+                                return 0.1;
+                            }
+                            return 0.6;
+                        })
+                        .on('end', function() {
+                            // Reset animation flag when everything is done
+                            isAnimating = false;
+                        });
+                    });
+                });
+            }, fadeOutDuration + duration);
         }
 
         // Timeline animation
@@ -3055,6 +3213,9 @@
         // Event listeners
         document.querySelectorAll('.toggle-item').forEach(item => {
             item.addEventListener('click', function() {
+                // Prevent clicks during animation
+                if (isAnimating) return;
+                
                 const mode = this.dataset.mode;
                 
                 if (mode === 'toggle-risk') {
@@ -3102,6 +3263,7 @@
         let selectedAudits = new Set();
         let selectedUnits = new Set();
         let selectedStandards = new Set();
+        let selectedRiskTypes = new Set();
         
         // Initialize dropdowns after everything is loaded
         function initializeDropdowns() {
@@ -3329,10 +3491,119 @@
             }
         });
         
+        // Extract unique risk types from risks data
+        riskTypes = [...new Set(data.risks.map(risk => risk.category))].map(category => ({
+            id: category,
+            name: category
+        }));
+        
+        const riskTypeDropdown = new MultiSelectDropdown({
+            id: 'risk-type',
+            items: riskTypes,
+            displayProperty: (type) => type.name,
+            placeholder: 'Select risk types...',
+            searchPlaceholder: 'Search risk types...',
+            onSelectionChange: (selectedItems) => {
+                selectedRiskTypes = selectedItems;
+                updateVisualization();
+            }
+        });
+        
             // Initialize visualization after dropdowns are set up
             if (typeof updateVisualization === 'function') {
                 updateVisualization();
             }
+        }
+        
+        // Initialize preset views dropdown functionality
+        function initializePresetViews() {
+            const presetSelect = document.getElementById('view-preset-select');
+            if (!presetSelect) return;
+            
+            presetSelect.addEventListener('change', function() {
+                const selectedPreset = this.value;
+                
+                // Clear all current selections first
+                function clearAllFilters() {
+                    // Clear audit selection
+                    selectedAudits.clear();
+                    const auditDropdown = document.querySelector('#audit-multiselect .filter-selected');
+                    if (auditDropdown) {
+                        auditDropdown.innerHTML = '<span class="filter-placeholder">Select audits...</span>';
+                    }
+                    
+                    // Clear other filters if needed
+                    selectedUnits = new Set(data.businessUnits.map(unit => unit.id));
+                    selectedStandards = new Set(data.standards.map(standard => standard.id));
+                    selectedRiskTypes = new Set(Array.from(new Set(data.risks.map(risk => risk.category))));
+                }
+                
+                switch(selectedPreset) {
+                    case 'default':
+                        // Reset to default view - show all
+                        clearAllFilters();
+                        selectedAudits = new Set(data.audits.map(audit => audit.id));
+                        selectedUnits = new Set(data.businessUnits.map(unit => unit.id));
+                        selectedStandards = new Set(data.standards.map(standard => standard.id));
+                        selectedRiskTypes = new Set(Array.from(new Set(data.risks.map(risk => risk.category))));
+                        break;
+                        
+                    case 'uncovered-risks':
+                        // Show risks with no audit coverage
+                        clearAllFilters();
+                        // Keep audits empty to show uncovered risks
+                        break;
+                        
+                    case 'high-risk-only':
+                        // Show only high risk items (rating >= 7)
+                        clearAllFilters();
+                        selectedAudits = new Set(data.audits.map(audit => audit.id));
+                        // Apply high risk threshold
+                        document.getElementById('risk-threshold').value = 7;
+                        document.getElementById('threshold-value').textContent = '7';
+                        document.getElementById('risk-threshold').dispatchEvent(new Event('input'));
+                        break;
+                        
+                    case 'recent-incidents':
+                        // Focus on incidents layer
+                        clearAllFilters();
+                        selectedAudits = new Set(data.audits.map(audit => audit.id));
+                        // Activate only incidents layer
+                        document.querySelectorAll('.entity-filter').forEach(filter => {
+                            filter.classList.remove('active');
+                            if (filter.dataset.entity === 'incidents') {
+                                filter.classList.add('active');
+                            }
+                        });
+                        break;
+                        
+                    case 'no-controls':
+                        // Show risks without controls
+                        clearAllFilters();
+                        selectedAudits = new Set(data.audits.map(audit => audit.id));
+                        // Deactivate controls layer
+                        document.querySelectorAll('.entity-filter').forEach(filter => {
+                            if (filter.dataset.entity === 'controls') {
+                                filter.classList.remove('active');
+                            }
+                        });
+                        break;
+                        
+                    case 'audit-gaps':
+                        // Show areas with low audit coverage
+                        clearAllFilters();
+                        // Select only audits with "Not Started" or "Planning" status
+                        const gapAudits = data.audits.filter(audit => 
+                            audit.status === 'Not Started' || audit.status === 'Planning'
+                        );
+                        selectedAudits = new Set(gapAudits.map(audit => audit.id));
+                        break;
+                }
+                
+                // Update visualization with new preset
+                updateVisualization();
+                updateStats();
+            });
         }
 
         document.getElementById('risk-threshold').addEventListener('input', function() {
