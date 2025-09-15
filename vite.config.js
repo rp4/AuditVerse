@@ -94,6 +94,15 @@ export default defineConfig({
             console.log('Styles directory copied to dist');
           }
 
+          // Copy js directory
+          const jsSource = resolve(__dirname, 'src/js');
+          const jsDest = resolve(__dirname, 'dist/js');
+
+          if (existsSync(jsSource)) {
+            copyRecursiveSync(jsSource, jsDest);
+            console.log('JS directory copied to dist');
+          }
+
           console.log('Build assets copied successfully');
         } catch (err) {
           console.error('Failed to copy build assets:', err);
