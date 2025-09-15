@@ -93,7 +93,8 @@ export class WelcomeScreen {
                                 min-width: 13rem;
                                 padding: 1rem 2rem;
                                 font-size: 1.125rem;
-                                font-weight: 600;
+                                font-weight: 500;
+                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
                                 border-radius: 0.75rem;
                                 cursor: pointer;
                                 transition: all 0.3s;
@@ -107,8 +108,7 @@ export class WelcomeScreen {
                             "
                             onmouseover="this.style.background='rgba(79, 70, 229, 0.9)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.3)';"
                             onmouseout="this.style.background='rgba(99, 102, 241, 0.8)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.2)';">
-                                ${this.createUploadIcon()}
-                                Load Data
+                                Choose JSON File
                             </label>
 
                             <button id="sample-btn" style="
@@ -118,7 +118,8 @@ export class WelcomeScreen {
                                 min-width: 13rem;
                                 padding: 1rem 2rem;
                                 font-size: 1.125rem;
-                                font-weight: 600;
+                                font-weight: 500;
+                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
                                 border-radius: 0.75rem;
                                 transition: all 0.3s;
                                 cursor: pointer;
@@ -132,7 +133,6 @@ export class WelcomeScreen {
                             "
                             onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.3)';"
                             onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.2)';">
-                                ${this.createFileTextIcon()}
                                 Try Now with Sample Data
                             </button>
                         </div>
