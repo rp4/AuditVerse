@@ -154,6 +154,14 @@ const init = errorHandler.wrap(function() {
 
     svg.call(zoom);
 
+    // Add click handler to background to clear selection
+    svg.on('click', function(event) {
+        // Only clear if clicking on the SVG background itself
+        if (event.target === this) {
+            clearSelection();
+        }
+    });
+
     // Draw grid
     drawGrid();
 
@@ -234,6 +242,7 @@ const updateVisualization = errorHandler.wrap(function() {
                 .attr('stroke-width', 2)
                 .style('filter', 'url(#glow)')
                 .on('click', function(event, d) {
+                    event.stopPropagation();
                     selectNode(d);
                 });
 
@@ -448,6 +457,7 @@ const updateVisualization = errorHandler.wrap(function() {
 
             // Add click handler
             group.on('click', function(event, d) {
+                event.stopPropagation();
                 selectNode(d);
             });
         });
@@ -554,14 +564,118 @@ function getEntityType(entity) {
     return null;
 }
 
+// Clear node selection
+function clearSelection() {
+    selectedNode = null;
+
+    // Reset all nodes and links to full opacity
+    g.selectAll('.risk-node')
+        .classed('selected', false)
+        .transition()
+        .duration(300)
+        .style('opacity', 1)
+        .style('filter', 'none');
+
+    g.selectAll('.entity-node')
+        .transition()
+        .duration(300)
+        .style('opacity', 1)
+        .style('filter', 'none');
+
+    g.selectAll('.orbiting-node-group')
+        .transition()
+        .duration(300)
+        .style('opacity', 1);
+
+    g.selectAll('.link')
+        .transition()
+        .duration(300)
+        .style('stroke-opacity', 0.6)
+        .style('stroke-width', 2);
+
+    // Clear details panel
+    document.getElementById('details-panel').innerHTML = '<div class="details-placeholder">Select a node to view details</div>';
+}
+
 // Select node
 function selectNode(node) {
     selectedNode = node;
     updateDetailsPanel(node);
-    
-    // Highlight selected node
+
+    // Get all connected nodes
+    const connectedNodeIds = new Set([node.id]);
+
+    // Find all relationships involving this node
+    data.relationships.forEach(rel => {
+        if (rel.risk_id === node.id || rel.entity_id === node.id) {
+            connectedNodeIds.add(rel.risk_id);
+            connectedNodeIds.add(rel.entity_id);
+        }
+    });
+
+    // Apply highlighting to nodes with smooth transitions
     g.selectAll('.risk-node')
-        .classed('selected', d => d.id === node.id);
+        .classed('selected', d => d.id === node.id)
+        .transition()
+        .duration(300)
+        .style('opacity', d => {
+            if (d.id === node.id) return 1; // Selected node fully visible
+            if (connectedNodeIds.has(d.id)) return 0.85; // Connected nodes slightly less visible
+            return 0.15; // Others very faint
+        })
+        .style('filter', d => {
+            if (d.id === node.id) return 'drop-shadow(0 0 30px currentColor) brightness(1.2)'; // Selected node glows bright
+            if (connectedNodeIds.has(d.id)) return 'drop-shadow(0 0 10px currentColor)'; // Connected nodes have subtle glow
+            return 'none';
+        });
+
+    // Apply highlighting to entity nodes
+    g.selectAll('.entity-node')
+        .transition()
+        .duration(300)
+        .style('opacity', d => {
+            if (d.id === node.id) return 1; // Selected node fully visible
+            if (connectedNodeIds.has(d.id)) return 0.85; // Connected nodes slightly less visible
+            return 0.15; // Others very faint
+        })
+        .style('filter', d => {
+            if (d.id === node.id) return 'drop-shadow(0 0 30px currentColor) brightness(1.2)'; // Selected node glows bright
+            if (connectedNodeIds.has(d.id)) return 'drop-shadow(0 0 10px currentColor)'; // Connected nodes have subtle glow
+            return 'none';
+        });
+
+    // Apply highlighting to orbiting nodes
+    g.selectAll('.orbiting-node-group')
+        .transition()
+        .duration(300)
+        .style('opacity', function(d) {
+            const parentId = d3.select(this).attr('data-parent-id');
+            if (d.id === node.id || parentId === node.id) return 1;
+            if (connectedNodeIds.has(parentId) || connectedNodeIds.has(d.id)) return 0.85;
+            return 0.15;
+        });
+
+    // Apply highlighting to links - make connected links prominent
+    g.selectAll('.link')
+        .transition()
+        .duration(300)
+        .style('stroke-opacity', d => {
+            const isConnected = (d.source?.id === node.id || d.target?.id === node.id) ||
+                               (connectedNodeIds.has(d.source?.id || d.source) &&
+                                connectedNodeIds.has(d.target?.id || d.target));
+            return isConnected ? 0.9 : 0.05;
+        })
+        .style('stroke-width', d => {
+            const isDirectlyConnected = (d.source?.id === node.id || d.target?.id === node.id);
+            if (isDirectlyConnected) return 4; // Direct connections are thickest
+            const isConnected = connectedNodeIds.has(d.source?.id || d.source) &&
+                               connectedNodeIds.has(d.target?.id || d.target);
+            return isConnected ? 2.5 : 1;
+        })
+        .style('filter', d => {
+            const isDirectlyConnected = (d.source?.id === node.id || d.target?.id === node.id);
+            return isDirectlyConnected ? 'drop-shadow(0 0 8px currentColor)' : 'none';
+        });
 }
 
 // Update details panel
@@ -582,47 +696,86 @@ function updateDetailsPanel(node) {
     const typeEl = document.getElementById('details-type');
 
     if (titleEl) titleEl.textContent = node.name || node.id;
-    if (typeEl) typeEl.textContent = node.type || 'Risk';
+    if (typeEl) typeEl.textContent = node.type ? node.type.charAt(0).toUpperCase() + node.type.slice(1) : 'Risk';
 
-    // Update metrics
-    const metricsHtml = `
-        <div class="metric-item">
-            <span class="metric-label">ID</span>
-            <span class="metric-value">${node.id}</span>
-        </div>
-        ${node.inherent_rating ? `
-        <div class="metric-item">
-            <span class="metric-label">Inherent Rating</span>
-            <span class="metric-value">${node.inherent_rating.toFixed(1)}</span>
-        </div>` : ''}
-        ${node.residual_rating ? `
-        <div class="metric-item">
-            <span class="metric-label">Residual Rating</span>
-            <span class="metric-value">${node.residual_rating.toFixed(1)}</span>
-        </div>` : ''}
-        ${node.owner ? `
-        <div class="metric-item">
-            <span class="metric-label">Owner</span>
-            <span class="metric-value">${node.owner}</span>
-        </div>` : ''}
-        ${node.category ? `
-        <div class="metric-item">
-            <span class="metric-label">Category</span>
-            <span class="metric-value">${node.category}</span>
-        </div>` : ''}
-    `;
-
+    // For risk nodes, update the 2x2 metrics grid
     const metricsGrid = document.querySelector('.metrics-grid');
-    if (metricsGrid) {
-        metricsGrid.innerHTML = metricsHtml;
+    if (node.type === 'risk' && metricsGrid) {
+        // Update the four metric values in the existing grid structure
+        const likelihoodInherent = document.getElementById('metric-likelihood-inherent');
+        const likelihoodResidual = document.getElementById('metric-likelihood-residual');
+        const severityInherent = document.getElementById('metric-severity-inherent');
+        const severityResidual = document.getElementById('metric-severity-residual');
+
+        if (likelihoodInherent) likelihoodInherent.textContent = node.inherent_likelihood || 0;
+        if (likelihoodResidual) likelihoodResidual.textContent = node.residual_likelihood || 0;
+        if (severityInherent) severityInherent.textContent = node.inherent_severity || 0;
+        if (severityResidual) severityResidual.textContent = node.residual_severity || 0;
+
+        // Ensure metrics grid is visible with proper styling
+        metricsGrid.style.display = 'grid';
+        metricsGrid.style.gridTemplateColumns = '1fr 1fr';
+        metricsGrid.style.gap = '10px';
+        metricsGrid.style.marginBottom = '20px';
+    } else if (metricsGrid) {
+        // Hide metrics grid for non-risk nodes
+        metricsGrid.style.display = 'none';
     }
 
-    // Update description
-    const descSection = document.querySelector('.details-section');
-    if (descSection && node.description) {
-        const descEl = descSection.querySelector('p');
-        if (descEl) {
-            descEl.textContent = node.description;
+    // Update connections list
+    const connections = data.relationships.filter(r =>
+        r.source === node.id || r.target === node.id
+    );
+
+    const connectionsList = document.getElementById('connections-list');
+    if (connectionsList) {
+        connectionsList.innerHTML = '';
+
+        connections.forEach(conn => {
+            const otherNodeId = conn.source === node.id ? conn.target : conn.source;
+            const otherNode = getEntityById(otherNodeId) ||
+                data.risks?.find(r => r.id === otherNodeId);
+
+            if (otherNode) {
+                const item = document.createElement('div');
+                item.className = 'connection-item';
+                item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(0,255,204,0.05); border-radius: 6px; margin-bottom: 8px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(0,255,204,0.1);';
+
+                // Determine entity color based on type
+                let entityColor = '#00ffcc';
+                if (otherNode.type === 'control' || data.controls?.some(c => c.id === otherNode.id)) entityColor = '#00ccff';
+                else if (otherNode.type === 'issue' || data.issues?.some(i => i.id === otherNode.id)) entityColor = '#ffff00';
+                else if (otherNode.type === 'incident' || data.incidents?.some(i => i.id === otherNode.id)) entityColor = '#ff0099';
+                else if (otherNode.type === 'audit' || data.audits?.some(a => a.id === otherNode.id)) entityColor = '#ff00ff';
+                else if (otherNode.type === 'standard' || data.standards?.some(s => s.id === otherNode.id)) entityColor = '#9966ff';
+                else if (otherNode.type === 'risk') entityColor = '#ff0066';
+
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                        <span style="color: ${entityColor}; font-size: 1.2rem;">●</span>
+                        <span style="color: #e0e0e0; font-size: 0.9rem;">${otherNode.name || otherNode.title || otherNode.description || otherNode.id}</span>
+                    </div>
+                    <span style="opacity: 0.6; font-size: 0.75rem; color: #00ffcc; text-transform: uppercase;">${conn.type?.replace('_', ' ') || 'linked'}</span>
+                `;
+
+                item.onmouseover = () => {
+                    item.style.background = 'rgba(0,255,204,0.15)';
+                    item.style.borderColor = 'rgba(0,255,204,0.5)';
+                };
+                item.onmouseout = () => {
+                    item.style.background = 'rgba(0,255,204,0.05)';
+                    item.style.borderColor = 'rgba(0,255,204,0.1)';
+                };
+                item.onclick = () => {
+                    selectNode(otherNode);
+                };
+
+                connectionsList.appendChild(item);
+            }
+        });
+
+        if (connections.length === 0) {
+            connectionsList.innerHTML = '<div style="color: rgba(255,255,255,0.4); font-size: 0.9rem; text-align: center; padding: 20px;">No connections</div>';
         }
     }
 
