@@ -1,0 +1,1304 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "generated": "2024-12-23",
+    "organization": "Sample Corporation",
+    "description": "Comprehensive risk management data for demonstration purposes"
+  },
+  "risks": [
+    {
+      "id": "R001",
+      "name": "Data Breach",
+      "description": "Unauthorized access to sensitive customer or company data",
+      "entity": "Risk",
+      "inherent_likelihood": 8,
+      "inherent_severity": 9,
+      "inherent_rating": 8.5,
+      "residual_likelihood": 5,
+      "residual_severity": 9,
+      "residual_rating": 7,
+      "owner": "John Smith",
+      "category": "Cyber",
+      "trend": "increasing",
+      "last_assessment": "2024-12-01",
+      "mitigation_status": "In Progress",
+      "risk_appetite": 3
+    },
+    {
+      "id": "R002",
+      "name": "Regulatory Non-Compliance",
+      "description": "Failure to comply with regulatory requirements and standards",
+      "entity": "Risk",
+      "inherent_likelihood": 7,
+      "inherent_severity": 8,
+      "inherent_rating": 7.5,
+      "residual_likelihood": 4,
+      "residual_severity": 8,
+      "residual_rating": 6,
+      "owner": "Jane Doe",
+      "category": "Compliance",
+      "trend": "stable",
+      "last_assessment": "2024-11-15",
+      "mitigation_status": "Ongoing",
+      "risk_appetite": 2
+    },
+    {
+      "id": "R003",
+      "name": "Supply Chain Disruption",
+      "description": "Interruption in supply chain affecting operations",
+      "entity": "Risk",
+      "inherent_likelihood": 6,
+      "inherent_severity": 7,
+      "inherent_rating": 6.5,
+      "residual_likelihood": 6,
+      "residual_severity": 7,
+      "residual_rating": 6.5,
+      "owner": "Bob Wilson",
+      "category": "Operational",
+      "trend": "increasing",
+      "last_assessment": "2024-10-20",
+      "mitigation_status": "Planning",
+      "risk_appetite": 4
+    },
+    {
+      "id": "R004",
+      "name": "Financial Fraud",
+      "description": "Internal or external fraudulent financial activities",
+      "entity": "Risk",
+      "inherent_likelihood": 5,
+      "inherent_severity": 9,
+      "inherent_rating": 7,
+      "residual_likelihood": 2,
+      "residual_severity": 9,
+      "residual_rating": 5.5,
+      "owner": "Alice Brown",
+      "category": "Financial",
+      "trend": "decreasing",
+      "last_assessment": "2024-12-10",
+      "mitigation_status": "Effective",
+      "risk_appetite": 1
+    },
+    {
+      "id": "R005",
+      "name": "System Downtime",
+      "description": "Critical system failures causing operational disruption",
+      "entity": "Risk",
+      "inherent_likelihood": 7,
+      "inherent_severity": 6,
+      "inherent_rating": 6.5,
+      "residual_likelihood": 3,
+      "residual_severity": 6,
+      "residual_rating": 4.5,
+      "owner": "Charlie Davis",
+      "category": "Technology",
+      "trend": "stable",
+      "last_assessment": "2024-11-30",
+      "mitigation_status": "Effective",
+      "risk_appetite": 3
+    },
+    {
+      "id": "R006",
+      "name": "Reputation Damage",
+      "description": "Negative public perception affecting brand value",
+      "entity": "Risk",
+      "inherent_likelihood": 5,
+      "inherent_severity": 8,
+      "inherent_rating": 6.5,
+      "residual_likelihood": 4,
+      "residual_severity": 8,
+      "residual_rating": 6,
+      "owner": "Diana Evans",
+      "category": "Strategic",
+      "trend": "stable",
+      "last_assessment": "2024-12-05",
+      "mitigation_status": "Monitoring",
+      "risk_appetite": 2
+    },
+    {
+      "id": "R007",
+      "name": "Intellectual Property Theft",
+      "description": "Unauthorized access or theft of proprietary information",
+      "entity": "Risk",
+      "inherent_likelihood": 6,
+      "inherent_severity": 9,
+      "inherent_rating": 7.5,
+      "residual_likelihood": 5,
+      "residual_severity": 9,
+      "residual_rating": 7,
+      "owner": "Frank Garcia",
+      "category": "Security",
+      "trend": "increasing",
+      "last_assessment": "2024-09-15",
+      "mitigation_status": "In Progress",
+      "risk_appetite": 1
+    },
+    {
+      "id": "R008",
+      "name": "Talent Loss",
+      "description": "Loss of key personnel and difficulty in talent retention",
+      "entity": "Risk",
+      "inherent_likelihood": 7,
+      "inherent_severity": 5,
+      "inherent_rating": 6,
+      "residual_likelihood": 4,
+      "residual_severity": 5,
+      "residual_rating": 4.5,
+      "owner": "Grace Harris",
+      "category": "Human Capital",
+      "trend": "decreasing",
+      "last_assessment": "2024-11-20",
+      "mitigation_status": "Effective",
+      "risk_appetite": 5
+    },
+    {
+      "id": "R009",
+      "name": "Climate Change Impact",
+      "description": "Physical and transition risks from climate change",
+      "entity": "Risk",
+      "inherent_likelihood": 4,
+      "inherent_severity": 7,
+      "inherent_rating": 5.5,
+      "residual_likelihood": 4,
+      "residual_severity": 7,
+      "residual_rating": 5.5,
+      "owner": "Henry Johnson",
+      "category": "Environmental",
+      "trend": "increasing",
+      "last_assessment": "2024-11-01",
+      "mitigation_status": "Planning",
+      "risk_appetite": 3
+    },
+    {
+      "id": "R010",
+      "name": "Third-Party Risk",
+      "description": "Risks arising from vendor and partner relationships",
+      "entity": "Risk",
+      "inherent_likelihood": 6,
+      "inherent_severity": 6,
+      "inherent_rating": 6,
+      "residual_likelihood": 4,
+      "residual_severity": 6,
+      "residual_rating": 5,
+      "owner": "Isabel Kim",
+      "category": "Operational",
+      "trend": "stable",
+      "last_assessment": "2024-12-12",
+      "mitigation_status": "Ongoing",
+      "risk_appetite": 3
+    },
+    {
+      "id": "R011",
+      "name": "Market Competition",
+      "description": "Loss of market share to competitors",
+      "entity": "Risk",
+      "inherent_likelihood": 8,
+      "inherent_severity": 5,
+      "inherent_rating": 6.5,
+      "residual_likelihood": 7,
+      "residual_severity": 5,
+      "residual_rating": 6,
+      "owner": "Jack Lee",
+      "category": "Strategic",
+      "trend": "increasing",
+      "last_assessment": "2024-12-15",
+      "mitigation_status": "In Progress",
+      "risk_appetite": 6
+    },
+    {
+      "id": "R012",
+      "name": "Product Quality Issues",
+      "description": "Defects or quality problems in products/services",
+      "entity": "Risk",
+      "inherent_likelihood": 4,
+      "inherent_severity": 8,
+      "inherent_rating": 6,
+      "residual_likelihood": 2,
+      "residual_severity": 8,
+      "residual_rating": 5,
+      "owner": "Karen Miller",
+      "category": "Operational",
+      "trend": "decreasing",
+      "last_assessment": "2024-12-08",
+      "mitigation_status": "Effective",
+      "risk_appetite": 2
+    }
+  ],
+  "controls": [
+    {
+      "id": "C001",
+      "name": "Access Control System",
+      "description": "Multi-factor authentication and role-based access",
+      "type": "Preventive",
+      "effectiveness": 85,
+      "cost": 150000,
+      "implementation_date": "2023-06-01",
+      "owner": "IT Security",
+      "status": "Active"
+    },
+    {
+      "id": "C002",
+      "name": "Data Encryption",
+      "description": "End-to-end encryption for data at rest and in transit",
+      "type": "Preventive",
+      "effectiveness": 92,
+      "cost": 200000,
+      "implementation_date": "2023-03-15",
+      "owner": "IT Security",
+      "status": "Active"
+    },
+    {
+      "id": "C003",
+      "name": "Security Monitoring",
+      "description": "24/7 SOC monitoring and threat detection",
+      "type": "Detective",
+      "effectiveness": 78,
+      "cost": 500000,
+      "implementation_date": "2022-11-01",
+      "owner": "Security Operations",
+      "status": "Active"
+    },
+    {
+      "id": "C004",
+      "name": "Backup Systems",
+      "description": "Redundant backup systems with automatic failover",
+      "type": "Corrective",
+      "effectiveness": 95,
+      "cost": 300000,
+      "implementation_date": "2022-09-01",
+      "owner": "IT Infrastructure",
+      "status": "Active"
+    },
+    {
+      "id": "C005",
+      "name": "Security Training Program",
+      "description": "Regular security awareness training for all employees",
+      "type": "Preventive",
+      "effectiveness": 70,
+      "cost": 50000,
+      "implementation_date": "2023-01-01",
+      "owner": "HR",
+      "status": "Active"
+    },
+    {
+      "id": "C006",
+      "name": "Incident Response Team",
+      "description": "Dedicated team for security incident response",
+      "type": "Corrective",
+      "effectiveness": 82,
+      "cost": 400000,
+      "implementation_date": "2023-04-01",
+      "owner": "Security Operations",
+      "status": "Active"
+    },
+    {
+      "id": "C007",
+      "name": "Vendor Management Program",
+      "description": "Comprehensive vendor risk assessment and monitoring",
+      "type": "Preventive",
+      "effectiveness": 65,
+      "cost": 100000,
+      "implementation_date": "2023-07-01",
+      "owner": "Procurement",
+      "status": "Active"
+    },
+    {
+      "id": "C008",
+      "name": "Internal Audit Program",
+      "description": "Regular internal audits and compliance reviews",
+      "type": "Detective",
+      "effectiveness": 88,
+      "cost": 250000,
+      "implementation_date": "2022-01-01",
+      "owner": "Internal Audit",
+      "status": "Active"
+    },
+    {
+      "id": "C009",
+      "name": "Business Continuity Plan",
+      "description": "Comprehensive BCP with regular testing",
+      "type": "Corrective",
+      "effectiveness": 75,
+      "cost": 150000,
+      "implementation_date": "2023-02-01",
+      "owner": "Risk Management",
+      "status": "Active"
+    },
+    {
+      "id": "C010",
+      "name": "Fraud Detection System",
+      "description": "AI-powered fraud detection and prevention",
+      "type": "Detective",
+      "effectiveness": 90,
+      "cost": 350000,
+      "implementation_date": "2023-05-01",
+      "owner": "Finance",
+      "status": "Active"
+    }
+  ],
+  "audits": [
+    {
+      "id": "A001",
+      "name": "IT Security Audit",
+      "type": "Internal",
+      "status": "Completed",
+      "date": "2024-11-01",
+      "lead_auditor": "Michael Brown",
+      "findings": 12,
+      "critical_findings": 2,
+      "report_url": "/reports/IT-Security-2024-Q4.pdf"
+    },
+    {
+      "id": "A002",
+      "name": "Compliance Review",
+      "type": "External",
+      "status": "In Progress",
+      "date": "2024-12-15",
+      "lead_auditor": "Sarah Johnson",
+      "findings": 8,
+      "critical_findings": 1,
+      "report_url": null
+    },
+    {
+      "id": "A003",
+      "name": "Financial Audit",
+      "type": "External",
+      "status": "Planned",
+      "date": "2025-01-15",
+      "lead_auditor": "David Williams",
+      "findings": 0,
+      "critical_findings": 0,
+      "report_url": null
+    },
+    {
+      "id": "A004",
+      "name": "Operations Assessment",
+      "type": "Internal",
+      "status": "Completed",
+      "date": "2024-10-15",
+      "lead_auditor": "Emily Davis",
+      "findings": 15,
+      "critical_findings": 3,
+      "report_url": "/reports/Operations-2024-Q3.pdf"
+    },
+    {
+      "id": "A005",
+      "name": "Data Privacy Audit",
+      "type": "External",
+      "status": "Completed",
+      "date": "2024-09-01",
+      "lead_auditor": "Robert Garcia",
+      "findings": 6,
+      "critical_findings": 0,
+      "report_url": "/reports/Data-Privacy-2024.pdf"
+    },
+    {
+      "id": "A006",
+      "name": "Vendor Risk Assessment",
+      "type": "Internal",
+      "status": "In Progress",
+      "date": "2024-12-20",
+      "lead_auditor": "Lisa Anderson",
+      "findings": 10,
+      "critical_findings": 2,
+      "report_url": null
+    }
+  ],
+  "businessUnits": [
+    {
+      "id": "BU001",
+      "name": "Information Technology",
+      "code": "IT",
+      "head": "Thomas Wilson",
+      "employees": 150,
+      "budget": 5000000,
+      "risk_score": 7.2
+    },
+    {
+      "id": "BU002",
+      "name": "Finance & Accounting",
+      "code": "FIN",
+      "head": "Margaret Chen",
+      "employees": 80,
+      "budget": 2000000,
+      "risk_score": 5.8
+    },
+    {
+      "id": "BU003",
+      "name": "Human Resources",
+      "code": "HR",
+      "head": "Jennifer Taylor",
+      "employees": 40,
+      "budget": 1500000,
+      "risk_score": 4.5
+    },
+    {
+      "id": "BU004",
+      "name": "Operations",
+      "code": "OPS",
+      "head": "Richard Martinez",
+      "employees": 200,
+      "budget": 8000000,
+      "risk_score": 6.3
+    },
+    {
+      "id": "BU005",
+      "name": "Legal & Compliance",
+      "code": "LEG",
+      "head": "Patricia Robinson",
+      "employees": 30,
+      "budget": 1200000,
+      "risk_score": 6.0
+    },
+    {
+      "id": "BU006",
+      "name": "Sales & Marketing",
+      "code": "S&M",
+      "head": "Christopher Lee",
+      "employees": 120,
+      "budget": 4000000,
+      "risk_score": 5.5
+    },
+    {
+      "id": "BU007",
+      "name": "Research & Development",
+      "code": "R&D",
+      "head": "Barbara White",
+      "employees": 90,
+      "budget": 6000000,
+      "risk_score": 7.0
+    },
+    {
+      "id": "BU008",
+      "name": "Customer Service",
+      "code": "CS",
+      "head": "Daniel Harris",
+      "employees": 100,
+      "budget": 2500000,
+      "risk_score": 4.2
+    }
+  ],
+  "standards": [
+    {
+      "id": "S001",
+      "name": "ISO 27001",
+      "type": "Security",
+      "description": "Information Security Management System",
+      "compliance_status": "Certified",
+      "last_review": "2024-06-01",
+      "next_review": "2025-06-01"
+    },
+    {
+      "id": "S002",
+      "name": "GDPR",
+      "type": "Privacy",
+      "description": "General Data Protection Regulation",
+      "compliance_status": "Compliant",
+      "last_review": "2024-09-01",
+      "next_review": "2025-03-01"
+    },
+    {
+      "id": "S003",
+      "name": "SOC 2 Type II",
+      "type": "Compliance",
+      "description": "Service Organization Control 2",
+      "compliance_status": "Certified",
+      "last_review": "2024-03-01",
+      "next_review": "2025-03-01"
+    },
+    {
+      "id": "S004",
+      "name": "PCI DSS",
+      "type": "Payment",
+      "description": "Payment Card Industry Data Security Standard",
+      "compliance_status": "Compliant",
+      "last_review": "2024-07-01",
+      "next_review": "2025-01-01"
+    },
+    {
+      "id": "S005",
+      "name": "NIST CSF",
+      "type": "Framework",
+      "description": "NIST Cybersecurity Framework",
+      "compliance_status": "Adopted",
+      "last_review": "2024-05-01",
+      "next_review": "2025-05-01"
+    },
+    {
+      "id": "S006",
+      "name": "COBIT",
+      "type": "Governance",
+      "description": "Control Objectives for Information Technologies",
+      "compliance_status": "Partially Implemented",
+      "last_review": "2024-04-01",
+      "next_review": "2025-04-01"
+    },
+    {
+      "id": "S007",
+      "name": "HIPAA",
+      "type": "Healthcare",
+      "description": "Health Insurance Portability and Accountability Act",
+      "compliance_status": "Not Applicable",
+      "last_review": null,
+      "next_review": null
+    },
+    {
+      "id": "S008",
+      "name": "ISO 9001",
+      "type": "Quality",
+      "description": "Quality Management System",
+      "compliance_status": "Certified",
+      "last_review": "2024-08-01",
+      "next_review": "2025-08-01"
+    }
+  ],
+  "issues": [
+    {
+      "id": "I001",
+      "title": "Weak Password Policy",
+      "description": "Current password requirements do not meet security standards",
+      "severity": "High",
+      "status": "Open",
+      "identified_date": "2024-11-15",
+      "due_date": "2025-01-15",
+      "assigned_to": "IT Security",
+      "multiRisk": false
+    },
+    {
+      "id": "I002",
+      "title": "Missing Documentation",
+      "description": "Critical processes lack proper documentation",
+      "severity": "Medium",
+      "status": "In Progress",
+      "identified_date": "2024-10-01",
+      "due_date": "2024-12-31",
+      "assigned_to": "Quality Assurance",
+      "multiRisk": false
+    },
+    {
+      "id": "I003",
+      "title": "Outdated Software",
+      "description": "Multiple systems running unsupported software versions",
+      "severity": "High",
+      "status": "Open",
+      "identified_date": "2024-11-20",
+      "due_date": "2025-02-01",
+      "assigned_to": "IT Infrastructure",
+      "multiRisk": false
+    },
+    {
+      "id": "I004",
+      "title": "Training Gaps",
+      "description": "Employees not completing mandatory security training",
+      "severity": "Low",
+      "status": "Closed",
+      "identified_date": "2024-09-01",
+      "due_date": "2024-11-01",
+      "assigned_to": "HR",
+      "multiRisk": false
+    },
+    {
+      "id": "I005",
+      "title": "Inadequate Access Controls",
+      "description": "Privileged access management needs improvement",
+      "severity": "Critical",
+      "status": "Open",
+      "identified_date": "2024-12-01",
+      "due_date": "2025-01-01",
+      "assigned_to": "IT Security",
+      "multiRisk": true
+    },
+    {
+      "id": "I006",
+      "title": "Poor Vendor Oversight",
+      "description": "Insufficient monitoring of critical vendor performance",
+      "severity": "High",
+      "status": "Open",
+      "identified_date": "2024-11-10",
+      "due_date": "2025-02-15",
+      "assigned_to": "Procurement",
+      "multiRisk": true
+    },
+    {
+      "id": "I007",
+      "title": "Insufficient Monitoring",
+      "description": "Gaps in system and security monitoring coverage",
+      "severity": "High",
+      "status": "In Progress",
+      "identified_date": "2024-10-15",
+      "due_date": "2025-01-30",
+      "assigned_to": "Security Operations",
+      "multiRisk": true
+    },
+    {
+      "id": "I008",
+      "title": "Data Classification Issues",
+      "description": "Data not properly classified according to sensitivity",
+      "severity": "Medium",
+      "status": "Open",
+      "identified_date": "2024-11-25",
+      "due_date": "2025-03-01",
+      "assigned_to": "Data Governance",
+      "multiRisk": true
+    },
+    {
+      "id": "I009",
+      "title": "BCP Testing Gaps",
+      "description": "Business continuity plans not tested regularly",
+      "severity": "High",
+      "status": "Open",
+      "identified_date": "2024-12-05",
+      "due_date": "2025-02-28",
+      "assigned_to": "Risk Management",
+      "multiRisk": true
+    },
+    {
+      "id": "I010",
+      "title": "Third-Party Integration Vulnerabilities",
+      "description": "Security vulnerabilities in third-party integrations",
+      "severity": "Critical",
+      "status": "Open",
+      "identified_date": "2024-12-10",
+      "due_date": "2024-12-31",
+      "assigned_to": "IT Security",
+      "multiRisk": true
+    }
+  ],
+  "incidents": [
+    {
+      "id": "IN001",
+      "title": "Phishing Attack Attempt",
+      "description": "Sophisticated phishing campaign targeting executives",
+      "date": "2024-12-20",
+      "severity": "High",
+      "impact": "No Data Loss",
+      "response_time": "15 minutes",
+      "resolution_time": "2 hours",
+      "root_cause": "Social Engineering",
+      "status": "Resolved"
+    },
+    {
+      "id": "IN002",
+      "title": "Service Outage",
+      "description": "Customer portal unavailable for 3 hours",
+      "date": "2024-12-18",
+      "severity": "Medium",
+      "impact": "Service Disruption",
+      "response_time": "5 minutes",
+      "resolution_time": "3 hours",
+      "root_cause": "Infrastructure Failure",
+      "status": "Resolved"
+    },
+    {
+      "id": "IN003",
+      "title": "Data Exposure",
+      "description": "Misconfigured database exposed customer data",
+      "date": "2024-12-10",
+      "severity": "Critical",
+      "impact": "Data Exposure",
+      "response_time": "30 minutes",
+      "resolution_time": "4 hours",
+      "root_cause": "Configuration Error",
+      "status": "Resolved"
+    },
+    {
+      "id": "IN004",
+      "title": "Ransomware Detection",
+      "description": "Ransomware detected and contained before execution",
+      "date": "2024-11-28",
+      "severity": "Critical",
+      "impact": "No Impact - Prevented",
+      "response_time": "2 minutes",
+      "resolution_time": "1 hour",
+      "root_cause": "Malware",
+      "status": "Resolved"
+    },
+    {
+      "id": "IN005",
+      "title": "Insider Threat Alert",
+      "description": "Unusual data access patterns detected",
+      "date": "2024-11-15",
+      "severity": "High",
+      "impact": "Under Investigation",
+      "response_time": "10 minutes",
+      "resolution_time": "48 hours",
+      "root_cause": "Policy Violation",
+      "status": "Under Investigation"
+    }
+  ],
+  "entities": [
+    {
+      "id": "E001",
+      "name": "IT Systems",
+      "type": "Department",
+      "risk_owner": "Thomas Wilson",
+      "risk_count": 2,
+      "control_count": 4
+    },
+    {
+      "id": "E002",
+      "name": "Finance",
+      "type": "Department",
+      "risk_owner": "Margaret Chen",
+      "risk_count": 1,
+      "control_count": 2
+    },
+    {
+      "id": "E003",
+      "name": "Operations",
+      "type": "Department",
+      "risk_owner": "Richard Martinez",
+      "risk_count": 2,
+      "control_count": 3
+    },
+    {
+      "id": "E004",
+      "name": "Legal",
+      "type": "Department",
+      "risk_owner": "Patricia Robinson",
+      "risk_count": 1,
+      "control_count": 2
+    },
+    {
+      "id": "E005",
+      "name": "HR",
+      "type": "Department",
+      "risk_owner": "Jennifer Taylor",
+      "risk_count": 1,
+      "control_count": 1
+    },
+    {
+      "id": "E006",
+      "name": "Marketing",
+      "type": "Department",
+      "risk_owner": "Christopher Lee",
+      "risk_count": 1,
+      "control_count": 1
+    },
+    {
+      "id": "E007",
+      "name": "R&D",
+      "type": "Department",
+      "risk_owner": "Barbara White",
+      "risk_count": 1,
+      "control_count": 2
+    },
+    {
+      "id": "E008",
+      "name": "Procurement",
+      "type": "Department",
+      "risk_owner": "Daniel Harris",
+      "risk_count": 1,
+      "control_count": 1
+    },
+    {
+      "id": "E009",
+      "name": "Sales",
+      "type": "Department",
+      "risk_owner": "Christopher Lee",
+      "risk_count": 1,
+      "control_count": 1
+    },
+    {
+      "id": "E010",
+      "name": "Quality",
+      "type": "Department",
+      "risk_owner": "Emily Davis",
+      "risk_count": 1,
+      "control_count": 2
+    }
+  ],
+  "relationships": [
+    {
+      "source": "R001",
+      "target": "C001",
+      "type": "mitigates",
+      "strength": 0.8
+    },
+    {
+      "source": "R001",
+      "target": "C002",
+      "type": "mitigates",
+      "strength": 0.9
+    },
+    {
+      "source": "R001",
+      "target": "C003",
+      "type": "mitigates",
+      "strength": 0.7
+    },
+    {
+      "source": "R002",
+      "target": "C008",
+      "type": "mitigates",
+      "strength": 0.8
+    },
+    {
+      "source": "R003",
+      "target": "C007",
+      "type": "mitigates",
+      "strength": 0.6
+    },
+    {
+      "source": "R003",
+      "target": "C009",
+      "type": "mitigates",
+      "strength": 0.7
+    },
+    {
+      "source": "R004",
+      "target": "C003",
+      "type": "mitigates",
+      "strength": 0.8
+    },
+    {
+      "source": "R004",
+      "target": "C010",
+      "type": "mitigates",
+      "strength": 0.9
+    },
+    {
+      "source": "R005",
+      "target": "C004",
+      "type": "mitigates",
+      "strength": 0.95
+    },
+    {
+      "source": "R005",
+      "target": "C009",
+      "type": "mitigates",
+      "strength": 0.8
+    },
+    {
+      "source": "R006",
+      "target": "C005",
+      "type": "mitigates",
+      "strength": 0.5
+    },
+    {
+      "source": "R007",
+      "target": "C001",
+      "type": "mitigates",
+      "strength": 0.7
+    },
+    {
+      "source": "R007",
+      "target": "C002",
+      "type": "mitigates",
+      "strength": 0.85
+    },
+    {
+      "source": "R008",
+      "target": "C005",
+      "type": "mitigates",
+      "strength": 0.6
+    },
+    {
+      "source": "R009",
+      "target": "C009",
+      "type": "mitigates",
+      "strength": 0.5
+    },
+    {
+      "source": "R010",
+      "target": "C007",
+      "type": "mitigates",
+      "strength": 0.8
+    },
+    {
+      "source": "R011",
+      "target": "C008",
+      "type": "mitigates",
+      "strength": 0.4
+    },
+    {
+      "source": "R012",
+      "target": "C008",
+      "type": "mitigates",
+      "strength": 0.7
+    },
+    {
+      "source": "R001",
+      "target": "A001",
+      "type": "assessed_by",
+      "strength": 0.9
+    },
+    {
+      "source": "R002",
+      "target": "A002",
+      "type": "assessed_by",
+      "strength": 0.8
+    },
+    {
+      "source": "R003",
+      "target": "A004",
+      "type": "assessed_by",
+      "strength": 0.7
+    },
+    {
+      "source": "R004",
+      "target": "A003",
+      "type": "assessed_by",
+      "strength": 0.85
+    },
+    {
+      "source": "R005",
+      "target": "A001",
+      "type": "assessed_by",
+      "strength": 0.8
+    },
+    {
+      "source": "R007",
+      "target": "A001",
+      "type": "assessed_by",
+      "strength": 0.75
+    },
+    {
+      "source": "R001",
+      "target": "I001",
+      "type": "causes",
+      "strength": 0.9
+    },
+    {
+      "source": "R001",
+      "target": "I003",
+      "type": "causes",
+      "strength": 0.8
+    },
+    {
+      "source": "R002",
+      "target": "I002",
+      "type": "causes",
+      "strength": 0.6
+    },
+    {
+      "source": "R001",
+      "target": "I005",
+      "type": "causes",
+      "strength": 0.95
+    },
+    {
+      "source": "R007",
+      "target": "I005",
+      "type": "causes",
+      "strength": 0.9
+    },
+    {
+      "source": "R003",
+      "target": "I006",
+      "type": "causes",
+      "strength": 0.9
+    },
+    {
+      "source": "R010",
+      "target": "I006",
+      "type": "causes",
+      "strength": 0.85
+    },
+    {
+      "source": "R005",
+      "target": "I007",
+      "type": "causes",
+      "strength": 0.85
+    },
+    {
+      "source": "R001",
+      "target": "I008",
+      "type": "causes",
+      "strength": 0.8
+    },
+    {
+      "source": "R005",
+      "target": "I009",
+      "type": "causes",
+      "strength": 0.9
+    },
+    {
+      "source": "R001",
+      "target": "I010",
+      "type": "causes",
+      "strength": 0.9
+    },
+    {
+      "source": "R001",
+      "target": "IN001",
+      "type": "realized_in",
+      "strength": 0.9
+    },
+    {
+      "source": "R001",
+      "target": "IN003",
+      "type": "realized_in",
+      "strength": 0.95
+    },
+    {
+      "source": "R005",
+      "target": "IN002",
+      "type": "realized_in",
+      "strength": 0.8
+    },
+    {
+      "source": "R001",
+      "target": "IN004",
+      "type": "realized_in",
+      "strength": 0.85
+    },
+    {
+      "source": "R001",
+      "target": "E001",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R002",
+      "target": "E004",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R003",
+      "target": "E003",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R004",
+      "target": "E002",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R005",
+      "target": "E001",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R006",
+      "target": "E006",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R007",
+      "target": "E007",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R008",
+      "target": "E005",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R009",
+      "target": "E003",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R010",
+      "target": "E008",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R011",
+      "target": "E009",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R012",
+      "target": "E010",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R001",
+      "target": "S001",
+      "type": "requires",
+      "strength": 0.9
+    },
+    {
+      "source": "R001",
+      "target": "S002",
+      "type": "requires",
+      "strength": 0.95
+    },
+    {
+      "source": "R001",
+      "target": "S005",
+      "type": "requires",
+      "strength": 0.85
+    },
+    {
+      "source": "R002",
+      "target": "S002",
+      "type": "requires",
+      "strength": 0.9
+    },
+    {
+      "source": "R002",
+      "target": "S003",
+      "type": "requires",
+      "strength": 0.8
+    },
+    {
+      "source": "R004",
+      "target": "S004",
+      "type": "requires",
+      "strength": 0.95
+    },
+    {
+      "source": "R007",
+      "target": "S001",
+      "type": "requires",
+      "strength": 0.85
+    },
+    {
+      "source": "R012",
+      "target": "S008",
+      "type": "requires",
+      "strength": 0.9
+    },
+    {
+      "source": "R001",
+      "target": "I001",
+      "type": "causes",
+      "strength": 0.8
+    },
+    {
+      "source": "R001",
+      "target": "I003",
+      "type": "causes",
+      "strength": 0.7
+    },
+    {
+      "source": "R001",
+      "target": "IN001",
+      "type": "triggered",
+      "strength": 0.6
+    },
+    {
+      "source": "R001",
+      "target": "IN003",
+      "type": "triggered",
+      "strength": 0.9
+    },
+    {
+      "source": "R001",
+      "target": "BU001",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R002",
+      "target": "BU005",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R003",
+      "target": "BU004",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R004",
+      "target": "BU002",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R005",
+      "target": "I003",
+      "type": "causes",
+      "strength": 0.8
+    },
+    {
+      "source": "R005",
+      "target": "IN002",
+      "type": "triggered",
+      "strength": 0.7
+    },
+    {
+      "source": "R005",
+      "target": "BU001",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R006",
+      "target": "BU006",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R007",
+      "target": "I001",
+      "type": "causes",
+      "strength": 0.6
+    },
+    {
+      "source": "R007",
+      "target": "BU007",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R008",
+      "target": "I004",
+      "type": "causes",
+      "strength": 0.7
+    },
+    {
+      "source": "R008",
+      "target": "BU003",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R009",
+      "target": "I002",
+      "type": "causes",
+      "strength": 0.5
+    },
+    {
+      "source": "R009",
+      "target": "BU004",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R010",
+      "target": "I005",
+      "type": "causes",
+      "strength": 0.8
+    },
+    {
+      "source": "R010",
+      "target": "BU004",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R011",
+      "target": "BU006",
+      "type": "owned_by",
+      "strength": 1.0
+    },
+    {
+      "source": "R012",
+      "target": "IN004",
+      "type": "triggered",
+      "strength": 0.6
+    },
+    {
+      "source": "R012",
+      "target": "BU001",
+      "type": "owned_by",
+      "strength": 1.0
+    }
+  ]
+}

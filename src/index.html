@@ -433,8 +433,9 @@
             z-index: 10000;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
         }
-        
-        .filter-dropdown.show {
+
+        .filter-dropdown.show,
+        .filter-dropdown.active {
             display: block;
         }
         
@@ -527,8 +528,25 @@
         .filter-options-container {
             max-height: 190px;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
-        
+
+        .filter-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: #00ffcc;
+            cursor: pointer;
+        }
+
+        .filter-option label {
+            cursor: pointer;
+            color: #00ffcc;
+            font-size: 13px;
+            flex: 1;
+        }
+
         .filter-option {
             padding: 8px 12px;
             cursor: pointer;
@@ -540,6 +558,7 @@
             border-bottom: 1px solid rgba(0, 255, 204, 0.05);
             min-height: 32px;
             color: rgba(255, 255, 255, 0.8);
+            width: 100%;
         }
         
         .filter-option:hover {
@@ -960,7 +979,22 @@
             left: 22px;
             background: #00ffcc;
             background-image: radial-gradient(circle at 30% 30%, #00ffcc, #00aa99);
-            box-shadow: 
+            box-shadow:
+                1px 1px 2px rgba(0,0,0,0.5),
+                0 0 8px rgba(0,255,204,0.6);
+        }
+
+        /* Checked state for toggle checkbox */
+        .toggle-checkbox.checked {
+            background: #0a2a2a;
+            border-color: #00ffcc;
+        }
+
+        .toggle-checkbox.checked::after {
+            left: 22px;
+            background: #00ffcc;
+            background-image: radial-gradient(circle at 30% 30%, #00ffcc, #00aa99);
+            box-shadow:
                 1px 1px 2px rgba(0,0,0,0.5),
                 0 0 8px rgba(0,255,204,0.6);
         }
@@ -1904,20 +1938,22 @@
                 </div>
                 
                 <!-- Preset Views Dropdown -->
-                <div class="view-preset-container" style="margin-top: 15px;">
-                    <label class="filter-label" style="display: block; margin-bottom: 8px; font-family: 'Orbitron', monospace; font-size: 0.75rem; color: #00ffcc; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">Preset Views:</label>
-                    <div class="filter-multiselect" style="min-width: 100%;">
-                        <div class="filter-selected" id="preset-selected" style="background: rgba(0, 255, 204, 0.1); border: 2px solid #00ffcc; border-radius: 8px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease; min-height: 36px; font-size: 0.85rem;" 
-                             onmouseover="this.style.background='rgba(0, 255, 204, 0.2)'; this.style.boxShadow='0 0 15px rgba(0, 255, 204, 0.3)'" 
-                             onmouseout="this.style.background='rgba(0, 255, 204, 0.1)'; this.style.boxShadow='none'">
-                            <select id="view-preset-select" style="background: transparent; border: none; color: #00ffcc; font-size: 0.85rem; font-family: 'Rajdhani', sans-serif; cursor: pointer; outline: none; width: 100%;">
-                                <option value="default" style="background: #1a1a2e; color: #00ffcc;">Default View</option>
-                                <option value="uncovered-risks" style="background: #1a1a2e; color: #00ffcc;">Uncovered Risks (No Audits)</option>
-                                <option value="high-risk-only" style="background: #1a1a2e; color: #00ffcc;">High Risk Only</option>
-                                <option value="recent-incidents" style="background: #1a1a2e; color: #00ffcc;">Recent Incidents</option>
-                                <option value="no-controls" style="background: #1a1a2e; color: #00ffcc;">Risks Without Controls</option>
-                                <option value="audit-gaps" style="background: #1a1a2e; color: #00ffcc;">Audit Coverage Gaps</option>
-                            </select>
+                <div class="view-preset-container filter-group" style="margin-top: 15px; padding: 12px; background: linear-gradient(135deg, #2a2a2f 0%, #323237 100%); border: 2px solid #3a3a3f; border-style: outset; border-radius: 3px;">
+                    <label class="filter-label">Preset Views</label>
+                    <div class="filter-multiselect">
+                        <div class="filter-selected" id="preset-selected">
+                            <span id="preset-display">Default View</span>
+                            <span class="filter-arrow">▼</span>
+                        </div>
+                        <div class="filter-dropdown" id="preset-dropdown">
+                            <div class="filter-options-container" id="preset-options-container">
+                                <div class="filter-option" data-value="default">Default View</div>
+                                <div class="filter-option" data-value="uncovered-risks">Uncovered Risks (No Audits)</div>
+                                <div class="filter-option" data-value="high-risk-only">High Risk Only</div>
+                                <div class="filter-option" data-value="recent-incidents">Recent Incidents</div>
+                                <div class="filter-option" data-value="no-controls">Risks Without Controls</div>
+                                <div class="filter-option" data-value="audit-gaps">Audit Coverage Gaps</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1953,6 +1989,11 @@
                 <div class="entity-filter active" data-entity="audits">
                     <div class="entity-icon" style="background: #ff00ff;">🔍</div>
                     <span>Audits</span>
+                </div>
+                <div class="entity-filter active" data-entity="risks">
+                    <div class="entity-icon" style="background: #ff6600;">⚡</div>
+                    <span>Risks</span>
+                    <span class="coverage-percent" id="risks-coverage"></span>
                 </div>
             </div>
 
@@ -1996,27 +2037,27 @@
                     <h3 class="details-title" id="details-title">Risk Name</h3>
                     <div class="details-type" id="details-type">Risk</div>
                 </div>
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Likelihood - Inherent</div>
-                        <div class="metric-value" id="metric-likelihood-inherent">0</div>
+                <div class="metrics-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                    <div class="metric-card" style="background: rgba(0, 255, 204, 0.1); border: 1px solid rgba(0, 255, 204, 0.3); padding: 12px; border-radius: 8px;">
+                        <div class="metric-label" style="font-size: 0.85rem; color: rgba(0, 255, 204, 0.8); margin-bottom: 5px;">Inherent Likelihood</div>
+                        <div class="metric-value" id="metric-likelihood-inherent" style="font-size: 1.8rem; font-weight: bold; color: #00ffcc;">0</div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Likelihood - Residual</div>
-                        <div class="metric-value" id="metric-likelihood-residual">0</div>
+                    <div class="metric-card" style="background: rgba(0, 255, 204, 0.1); border: 1px solid rgba(0, 255, 204, 0.3); padding: 12px; border-radius: 8px;">
+                        <div class="metric-label" style="font-size: 0.85rem; color: rgba(0, 255, 204, 0.8); margin-bottom: 5px;">Residual Likelihood</div>
+                        <div class="metric-value" id="metric-likelihood-residual" style="font-size: 1.8rem; font-weight: bold; color: #00ffcc;">0</div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Severity - Inherent</div>
-                        <div class="metric-value" id="metric-severity-inherent">0</div>
+                    <div class="metric-card" style="background: rgba(255, 102, 0, 0.1); border: 1px solid rgba(255, 102, 0, 0.3); padding: 12px; border-radius: 8px;">
+                        <div class="metric-label" style="font-size: 0.85rem; color: rgba(255, 102, 0, 0.8); margin-bottom: 5px;">Inherent Severity</div>
+                        <div class="metric-value" id="metric-severity-inherent" style="font-size: 1.8rem; font-weight: bold; color: #ff6600;">0</div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Severity - Residual</div>
-                        <div class="metric-value" id="metric-severity-residual">0</div>
+                    <div class="metric-card" style="background: rgba(255, 102, 0, 0.1); border: 1px solid rgba(255, 102, 0, 0.3); padding: 12px; border-radius: 8px;">
+                        <div class="metric-label" style="font-size: 0.85rem; color: rgba(255, 102, 0, 0.8); margin-bottom: 5px;">Residual Severity</div>
+                        <div class="metric-value" id="metric-severity-residual" style="font-size: 1.8rem; font-weight: bold; color: #ff6600;">0</div>
                     </div>
                 </div>
-                <div class="connections-list">
-                    <h4 style="margin-bottom: 10px;">Connections</h4>
-                    <div id="connections-list"></div>
+                <div class="connections-list" style="border-top: 1px solid rgba(0, 255, 204, 0.2); padding-top: 15px;">
+                    <h4 style="margin-bottom: 12px; color: #00ffcc; font-size: 1rem; font-weight: 600;">Connected Entities</h4>
+                    <div id="connections-list" style="max-height: calc(100vh - 450px); overflow-y: auto;"></div>
                 </div>
             </div>
         </aside>
@@ -3335,11 +3376,22 @@
                 if (otherNode) {
                     const item = document.createElement('div');
                     item.className = 'connection-item';
+                    item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(0,255,204,0.05); border-radius: 6px; margin-bottom: 8px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(0,255,204,0.1);';
                     item.innerHTML = `
-                        <span style="color: ${getEntityColor(otherNode)};">●</span>
-                        <span>${otherNode.name || otherNode.title || otherNode.description}</span>
-                        <span style="opacity: 0.5; font-size: 0.8rem;">${conn.type}</span>
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                            <span style="color: ${getEntityColor(otherNode)}; font-size: 1.2rem;">●</span>
+                            <span style="color: #e0e0e0; font-size: 0.9rem;">${otherNode.name || otherNode.title || otherNode.description}</span>
+                        </div>
+                        <span style="opacity: 0.6; font-size: 0.75rem; color: #00ffcc; text-transform: uppercase;">${conn.type.replace('_', ' ')}</span>
                     `;
+                    item.onmouseover = () => {
+                        item.style.background = 'rgba(0,255,204,0.15)';
+                        item.style.borderColor = 'rgba(0,255,204,0.3)';
+                    };
+                    item.onmouseout = () => {
+                        item.style.background = 'rgba(0,255,204,0.05)';
+                        item.style.borderColor = 'rgba(0,255,204,0.1)';
+                    };
                     item.onclick = () => {
                         const fullNode = [...data.risks, ...data.controls, ...data.audits, ...data.issues, ...data.incidents, ...data.entities]
                             .find(n => n.id === otherNodeId);
@@ -3786,11 +3838,28 @@
         
         // Initialize preset views dropdown functionality
         function initializePresetViews() {
-            const presetSelect = document.getElementById('view-preset-select');
-            if (!presetSelect) return;
+            const presetSelected = document.getElementById('preset-selected');
+            const presetDropdown = document.getElementById('preset-dropdown');
+            const presetDisplay = document.getElementById('preset-display');
+            const presetOptions = document.querySelectorAll('#preset-options-container .filter-option');
             
-            presetSelect.addEventListener('change', function() {
-                const selectedPreset = this.value;
+            if (!presetSelected || !presetDropdown) return;
+            
+            // Toggle dropdown on click
+            presetSelected.addEventListener('click', function(e) {
+                e.stopPropagation();
+                presetDropdown.classList.toggle('show');
+                this.classList.toggle('active');
+            });
+            
+            // Handle option selection
+            presetOptions.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const selectedPreset = this.getAttribute('data-value');
+                    presetDisplay.textContent = this.textContent;
+                    presetDropdown.classList.remove('show');
+                    presetSelected.classList.remove('active');
                 
                 // Clear all current selections first
                 function clearAllFilters() {
@@ -3872,6 +3941,15 @@
                 // Update visualization with new preset
                 updateVisualization();
                 updateStats();
+                });
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!presetSelected.contains(e.target) && !presetDropdown.contains(e.target)) {
+                    presetDropdown.classList.remove('show');
+                    presetSelected.classList.remove('active');
+                }
             });
         }
 

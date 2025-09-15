@@ -1,0 +1,270 @@
+/* Notification Component Styles */
+
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    pointer-events: none;
+}
+
+.notification {
+    min-width: 300px;
+    max-width: 450px;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(20px);
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: slide-in-right 0.3s ease-out;
+    pointer-events: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes slide-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-out-right {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.notification.removing {
+    animation: slide-out-right 0.3s ease-in forwards;
+}
+
+.notification::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+/* Notification Types */
+.notification-success {
+    background: linear-gradient(135deg,
+        rgba(0, 255, 136, 0.1) 0%,
+        rgba(0, 255, 136, 0.05) 100%);
+    border: 1px solid var(--success-color);
+}
+
+.notification-success::before {
+    background: var(--success-color);
+}
+
+.notification-error,
+.error-notification {
+    background: linear-gradient(135deg,
+        rgba(255, 0, 102, 0.1) 0%,
+        rgba(255, 0, 102, 0.05) 100%);
+    border: 1px solid var(--danger-color);
+}
+
+.notification-error::before,
+.error-notification::before {
+    background: var(--danger-color);
+}
+
+.notification-warning {
+    background: linear-gradient(135deg,
+        rgba(255, 170, 0, 0.1) 0%,
+        rgba(255, 170, 0, 0.05) 100%);
+    border: 1px solid var(--warning-color);
+}
+
+.notification-warning::before {
+    background: var(--warning-color);
+}
+
+.notification-info {
+    background: linear-gradient(135deg,
+        rgba(0, 255, 204, 0.1) 0%,
+        rgba(0, 255, 204, 0.05) 100%);
+    border: 1px solid var(--primary-color);
+}
+
+.notification-info::before {
+    background: var(--primary-color);
+}
+
+/* Notification Content */
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-sm);
+}
+
+.notification-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-family: var(--font-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.notification-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.notification-success .notification-icon {
+    background: rgba(0, 255, 136, 0.2);
+    color: var(--success-color);
+}
+
+.notification-error .notification-icon,
+.error-notification .notification-icon {
+    background: rgba(255, 0, 102, 0.2);
+    color: var(--danger-color);
+}
+
+.notification-warning .notification-icon {
+    background: rgba(255, 170, 0, 0.2);
+    color: var(--warning-color);
+}
+
+.notification-info .notification-icon {
+    background: rgba(0, 255, 204, 0.2);
+    color: var(--primary-color);
+}
+
+.notification-close,
+.error-dismiss {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: var(--text-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.notification-close:hover,
+.error-dismiss:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+    transform: rotate(90deg);
+}
+
+.notification-message,
+.error-message {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.notification-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.notification-action {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.notification-action:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.notification-action-primary {
+    background: rgba(0, 255, 204, 0.2);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.notification-action-primary:hover {
+    background: rgba(0, 255, 204, 0.3);
+}
+
+/* Progress Bar */
+.notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.notification-progress-bar {
+    height: 100%;
+    background: currentColor;
+    animation: progress-countdown 5s linear forwards;
+}
+
+@keyframes progress-countdown {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* Severity-based Error Notifications */
+.error-notification.severity-1 {
+    border-color: var(--success-color);
+}
+
+.error-notification.severity-2 {
+    border-color: var(--warning-color);
+}
+
+.error-notification.severity-3 {
+    border-color: var(--danger-color);
+}
+
+.error-notification.severity-4 {
+    background: linear-gradient(135deg,
+        rgba(255, 0, 102, 0.3) 0%,
+        rgba(255, 0, 102, 0.15) 100%);
+    border-color: var(--danger-color);
+    border-width: 2px;
+    animation: pulse 2s infinite;
+}
