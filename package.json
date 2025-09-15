@@ -1,6 +1,6 @@
 {
   "name": "auditverse",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Transform your audit universe into an immersive starship command center experience",
   "main": "src/index.js",
   "type": "module",
