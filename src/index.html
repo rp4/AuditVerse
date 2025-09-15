@@ -7,7 +7,7 @@
     <title>AuditVerse | Starship Command Center</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' text-anchor='middle' font-size='80' dy='.35em'>🚀</text></svg>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-    <link rel="stylesheet" href="./styles/main.css">
+    <link rel="stylesheet" href="/styles/main.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@300;400;600&display=swap');
         
@@ -3345,19 +3345,26 @@
         function showNodeDetails(node) {
             document.querySelector('.details-empty').style.display = 'none';
             document.getElementById('details-content').style.display = 'block';
-            
+
             document.getElementById('details-title').textContent = node.name || node.title || node.description || 'Unknown';
             document.getElementById('details-type').textContent = node.type.charAt(0).toUpperCase() + node.type.slice(1);
-            
+
+            // Always show metrics grid for risk nodes with proper values
+            const metricsGrid = document.querySelector('.metrics-grid');
             if (node.type === 'risk') {
-                document.getElementById('metric-likelihood-inherent').textContent = node.inherent_likelihood;
-                document.getElementById('metric-likelihood-residual').textContent = node.residual_likelihood;
-                document.getElementById('metric-severity-inherent').textContent = node.inherent_severity;
-                document.getElementById('metric-severity-residual').textContent = node.residual_severity;
-                
-                document.querySelector('.metrics-grid').style.display = 'grid';
+                // Update the four metric values
+                document.getElementById('metric-likelihood-inherent').textContent = node.inherent_likelihood || 0;
+                document.getElementById('metric-likelihood-residual').textContent = node.residual_likelihood || 0;
+                document.getElementById('metric-severity-inherent').textContent = node.inherent_severity || 0;
+                document.getElementById('metric-severity-residual').textContent = node.residual_severity || 0;
+
+                // Ensure metrics grid is visible with proper styling
+                metricsGrid.style.display = 'grid';
+                metricsGrid.style.gridTemplateColumns = '1fr 1fr';
+                metricsGrid.style.gap = '10px';
+                metricsGrid.style.marginBottom = '20px';
             } else {
-                document.querySelector('.metrics-grid').style.display = 'none';
+                metricsGrid.style.display = 'none';
             }
             
             // Show connections

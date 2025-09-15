@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { resolve, join } from 'path';
 import legacy from '@vitejs/plugin-legacy';
-import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync, statSync, readdirSync } from 'fs';
 
 export default defineConfig({
   root: 'src',
@@ -46,11 +46,11 @@ export default defineConfig({
     {
       name: 'copy-data-files',
       closeBundle() {
-        // Copy data files to dist
+        // Copy data and styles files to dist
         try {
+          // Copy data files
           mkdirSync(resolve(__dirname, 'dist/data'), { recursive: true });
 
-          // Only copy files that exist
           const dataFiles = [
             'comprehensiveSampleData.json'
           ];
@@ -67,9 +67,36 @@ export default defineConfig({
             }
           });
 
-          console.log('Data files copied to dist');
+          // Copy styles directory
+          const copyRecursiveSync = (src, dest) => {
+            const exists = existsSync(src);
+            const stats = exists && statSync(src);
+            const isDirectory = exists && stats.isDirectory();
+
+            if (isDirectory) {
+              mkdirSync(dest, { recursive: true });
+              readdirSync(src).forEach(childItem => {
+                copyRecursiveSync(
+                  join(src, childItem),
+                  join(dest, childItem)
+                );
+              });
+            } else {
+              copyFileSync(src, dest);
+            }
+          };
+
+          const stylesSource = resolve(__dirname, 'src/styles');
+          const stylesDest = resolve(__dirname, 'dist/styles');
+
+          if (existsSync(stylesSource)) {
+            copyRecursiveSync(stylesSource, stylesDest);
+            console.log('Styles directory copied to dist');
+          }
+
+          console.log('Build assets copied successfully');
         } catch (err) {
-          console.error('Failed to copy data files:', err);
+          console.error('Failed to copy build assets:', err);
         }
       }
     }
