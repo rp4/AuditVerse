@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import legacy from '@vitejs/plugin-legacy';
-import { copyFileSync, mkdirSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync } from 'fs';
 
 export default defineConfig({
   root: 'src',
@@ -49,14 +49,24 @@ export default defineConfig({
         // Copy data files to dist
         try {
           mkdirSync(resolve(__dirname, 'dist/data'), { recursive: true });
-          copyFileSync(
-            resolve(__dirname, 'src/data/sampleData.json'),
-            resolve(__dirname, 'dist/data/sampleData.json')
-          );
-          copyFileSync(
-            resolve(__dirname, 'src/data/comprehensiveSampleData.json'),
-            resolve(__dirname, 'dist/data/comprehensiveSampleData.json')
-          );
+
+          // Only copy files that exist
+          const dataFiles = [
+            'comprehensiveSampleData.json'
+          ];
+
+          dataFiles.forEach(file => {
+            const srcPath = resolve(__dirname, 'src/data', file);
+            const distPath = resolve(__dirname, 'dist/data', file);
+
+            if (existsSync(srcPath)) {
+              copyFileSync(srcPath, distPath);
+              console.log(`Copied ${file} to dist`);
+            } else {
+              console.warn(`Data file ${file} not found, skipping`);
+            }
+          });
+
           console.log('Data files copied to dist');
         } catch (err) {
           console.error('Failed to copy data files:', err);
