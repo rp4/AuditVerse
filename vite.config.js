@@ -16,7 +16,8 @@ export default defineConfig({
   },
 
   build: {
-    outDir: '../dist', // Adjusted path since root is 'src'
+    outDir: resolve(__dirname, 'dist'), // Use absolute path resolution
+    emptyOutDir: true, // Explicitly allow emptying outDir
     assetsDir: 'assets',
     sourcemap: process.env.NODE_ENV !== 'production', // Disable sourcemaps in production
     minify: 'terser',
