@@ -34,7 +34,7 @@ AuditVerse is an innovative audit risk visualization platform that transforms tr
 ### Prerequisites
 - Modern web browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
 - Node.js 16+ (for development)
-- npm or yarn
+- npm or yarn package manager
 
 ### Installation
 
