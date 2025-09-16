@@ -68,11 +68,7 @@
 
 /* Base Styles */
 html {
-    background-color: var(--bg-primary);
-    background-image: 
-        radial-gradient(circle at 20% 50%, rgba(120, 20, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 0, 128, 0.05) 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(0, 255, 204, 0.03) 0%, transparent 50%);
+    /* Background styles are defined inline in index.html for starfield effect */
     min-height: 100vh;
 }
 

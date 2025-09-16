@@ -1074,9 +1074,12 @@ window.AuditVerse = {
     data
 };
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-} else {
-    initApp();
+// Initialize when DOM is ready (only in browser environment)
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+        // Add a small delay to ensure all resources are loaded
+        setTimeout(initApp, 100);
+    }
 }
