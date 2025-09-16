@@ -17,6 +17,7 @@ let animationInterval = null;
 let nodePositions = new Map(); // Store positions between updates
 let timelineValue = 0;
 let isAnimating = false;
+let appInitialized = false; // Track initialization state
 
 // Global selection states
 let selectedAudits = new Set();
@@ -26,22 +27,36 @@ let selectedRiskTypes = new Set();
 
 // Initialize the application
 async function initApp() {
+    // Prevent multiple initializations
+    if (appInitialized) {
+        logger.info('Application already initialized, skipping');
+        return;
+    }
+
     try {
         logger.info('Initializing AuditVerse application');
-        
+        appInitialized = true; // Mark as initialized immediately to prevent race conditions
+
         // Check if D3 is loaded
         if (typeof d3 === 'undefined') {
             throw new Error('D3.js library not loaded');
         }
-        
+
+        // Check if welcome screen already exists
+        if (document.getElementById('welcome-screen')) {
+            logger.info('Welcome screen already exists');
+            return;
+        }
+
         // Show welcome screen
         const welcomeScreen = new WelcomeScreen(handleDataLoaded);
         welcomeScreen.render();
-        
+
         logger.info('Welcome screen displayed');
     } catch (error) {
         logger.error('Application initialization failed', { error: error.message });
         showErrorMessage('Failed to initialize application. Please refresh the page.');
+        appInitialized = false; // Reset flag on error
     }
 }
 
@@ -1074,12 +1089,16 @@ window.AuditVerse = {
     data
 };
 
-// Initialize when DOM is ready (only in browser environment)
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initApp);
-    } else {
-        // Add a small delay to ensure all resources are loaded
-        setTimeout(initApp, 100);
-    }
-}
+// Export for ES modules
+export {
+    initApp,
+    handleDataLoaded,
+    createVisualization,
+    updateVisualization,
+    setupEventListeners,
+    updateStats,
+    selectNode
+};
+
+// Don't auto-initialize here - let the Vite entry point handle it
+// This prevents double initialization in production builds
