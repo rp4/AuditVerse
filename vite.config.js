@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
-import { resolve, join } from 'path';
+import { resolve } from 'path';
 import legacy from '@vitejs/plugin-legacy';
-import { copyFileSync, mkdirSync, existsSync, statSync, readdirSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync } from 'fs';
 
 export default defineConfig({
   root: 'src',
@@ -16,14 +16,14 @@ export default defineConfig({
   },
 
   build: {
-    outDir: resolve(__dirname, 'dist'), // Use absolute path resolution
-    emptyOutDir: true, // Explicitly allow emptying outDir
+    outDir: resolve(__dirname, 'dist'),
+    emptyOutDir: true,
     assetsDir: 'assets',
-    sourcemap: process.env.NODE_ENV !== 'production', // Disable sourcemaps in production
+    sourcemap: false,
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: process.env.NODE_ENV === 'production', // Only drop console in production
+        drop_console: true,
         drop_debugger: true,
       },
     },
@@ -37,75 +37,30 @@ export default defineConfig({
         },
       },
     },
+    // Copy static files
+    copyPublicDir: false,
   },
+
+  publicDir: resolve(__dirname, 'src/static'),
 
   plugins: [
     legacy({
       targets: ['defaults', 'not IE 11'],
     }),
     {
-      name: 'copy-data-files',
+      name: 'copy-static-files',
       closeBundle() {
-        // Copy data and styles files to dist
         try {
           // Copy data files
           mkdirSync(resolve(__dirname, 'dist/data'), { recursive: true });
 
-          const dataFiles = [
-            'comprehensiveSampleData.json'
-          ];
-
-          dataFiles.forEach(file => {
-            const srcPath = resolve(__dirname, 'src/data', file);
-            const distPath = resolve(__dirname, 'dist/data', file);
-
-            if (existsSync(srcPath)) {
-              copyFileSync(srcPath, distPath);
-              console.log(`Copied ${file} to dist`);
-            } else {
-              console.warn(`Data file ${file} not found, skipping`);
-            }
-          });
-
-          // Copy styles directory
-          const copyRecursiveSync = (src, dest) => {
-            const exists = existsSync(src);
-            const stats = exists && statSync(src);
-            const isDirectory = exists && stats.isDirectory();
-
-            if (isDirectory) {
-              mkdirSync(dest, { recursive: true });
-              readdirSync(src).forEach(childItem => {
-                copyRecursiveSync(
-                  join(src, childItem),
-                  join(dest, childItem)
-                );
-              });
-            } else {
-              copyFileSync(src, dest);
-            }
-          };
-
-          const stylesSource = resolve(__dirname, 'src/styles');
-          const stylesDest = resolve(__dirname, 'dist/styles');
-
-          if (existsSync(stylesSource)) {
-            copyRecursiveSync(stylesSource, stylesDest);
-            console.log('Styles directory copied to dist');
+          const dataFile = resolve(__dirname, 'src/data/comprehensiveSampleData.json');
+          if (existsSync(dataFile)) {
+            copyFileSync(dataFile, resolve(__dirname, 'dist/data/comprehensiveSampleData.json'));
+            console.log('Data files copied to dist');
           }
-
-          // Copy js directory
-          const jsSource = resolve(__dirname, 'src/js');
-          const jsDest = resolve(__dirname, 'dist/js');
-
-          if (existsSync(jsSource)) {
-            copyRecursiveSync(jsSource, jsDest);
-            console.log('JS directory copied to dist');
-          }
-
-          console.log('Build assets copied successfully');
         } catch (err) {
-          console.error('Failed to copy build assets:', err);
+          console.error('Failed to copy data files:', err);
         }
       }
     }
