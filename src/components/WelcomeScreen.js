@@ -338,7 +338,7 @@ export class WelcomeScreen {
         this.showProgress();
         
         try {
-            const response = await fetch('./data/comprehensiveSampleData.json');
+            const response = await fetch('/data/comprehensiveSampleData.json');
             
             if (!response.ok) {
                 throw new Error(`Failed to load sample data: ${response.status}`);
