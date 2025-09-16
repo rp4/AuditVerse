@@ -16,6 +16,8 @@ export class WelcomeScreen {
     }
 
     render() {
+        console.log('[WELCOME] Rendering welcome screen');
+
         // Create welcome screen HTML
         const welcomeHTML = `
             <div id="welcome-screen" class="landing-page-wrapper" style="
@@ -24,7 +26,7 @@ export class WelcomeScreen {
                 left: 0;
                 width: 100%;
                 height: 100vh;
-                background: url('/assets/Auditverse.png') center/cover no-repeat;
+                background: url('./assets/Auditverse.png') center/cover no-repeat;
                 background-size: cover;
                 display: flex;
                 align-items: center;

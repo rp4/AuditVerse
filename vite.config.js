@@ -23,7 +23,7 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: false,  // Keep console logs for debugging
         drop_debugger: true,
       },
     },
@@ -59,8 +59,26 @@ export default defineConfig({
             copyFileSync(dataFile, resolve(__dirname, 'dist/data/comprehensiveSampleData.json'));
             console.log('Data files copied to dist');
           }
+
+          // Copy public assets (including Auditverse.png)
+          const publicAssetsDir = resolve(__dirname, 'public/assets');
+          const distAssetsDir = resolve(__dirname, 'dist/assets');
+
+          if (existsSync(publicAssetsDir)) {
+            // Ensure the dist/assets directory exists
+            if (!existsSync(distAssetsDir)) {
+              mkdirSync(distAssetsDir, { recursive: true });
+            }
+
+            // Copy Auditverse.png specifically
+            const auditverseImg = resolve(publicAssetsDir, 'Auditverse.png');
+            if (existsSync(auditverseImg)) {
+              copyFileSync(auditverseImg, resolve(distAssetsDir, 'Auditverse.png'));
+              console.log('Auditverse.png copied to dist/assets');
+            }
+          }
         } catch (err) {
-          console.error('Failed to copy data files:', err);
+          console.error('Failed to copy static files:', err);
         }
       }
     }

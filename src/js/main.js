@@ -27,33 +27,52 @@ let selectedRiskTypes = new Set();
 
 // Initialize the application
 async function initApp() {
+    console.log('[APP] initApp called');
+
     // Prevent multiple initializations
     if (appInitialized) {
+        console.log('[APP] Application already initialized, skipping');
         logger.info('Application already initialized, skipping');
         return;
     }
 
     try {
+        console.log('[APP] Starting AuditVerse initialization');
         logger.info('Initializing AuditVerse application');
         appInitialized = true; // Mark as initialized immediately to prevent race conditions
 
+        // Check container visibility
+        const container = document.querySelector('.container');
+        console.log('[APP] Container found:', !!container);
+        if (container) {
+            const styles = window.getComputedStyle(container);
+            console.log('[APP] Container display:', styles.display);
+            console.log('[APP] Container visibility:', styles.visibility);
+        }
+
         // Check if D3 is loaded
         if (typeof d3 === 'undefined') {
+            console.error('[APP] D3.js not loaded!');
             throw new Error('D3.js library not loaded');
         }
+        console.log('[APP] D3.js loaded successfully');
 
         // Check if welcome screen already exists
         if (document.getElementById('welcome-screen')) {
+            console.log('[APP] Welcome screen already exists');
             logger.info('Welcome screen already exists');
             return;
         }
 
         // Show welcome screen
+        console.log('[APP] Creating welcome screen');
         const welcomeScreen = new WelcomeScreen(handleDataLoaded);
         welcomeScreen.render();
 
+        console.log('[APP] Welcome screen rendered');
         logger.info('Welcome screen displayed');
     } catch (error) {
+        console.error('[APP] Initialization failed:', error);
         logger.error('Application initialization failed', { error: error.message });
         showErrorMessage('Failed to initialize application. Please refresh the page.');
         appInitialized = false; // Reset flag on error
@@ -62,6 +81,7 @@ async function initApp() {
 
 // Handle data loaded from welcome screen
 function handleDataLoaded(loadedData) {
+    console.log('[HANDLE_DATA] handleDataLoaded called with:', loadedData);
     try {
         logger.info('Data loaded from welcome screen', {
             recordCounts: {
@@ -71,25 +91,41 @@ function handleDataLoaded(loadedData) {
             }
         });
 
+        console.log('[HANDLE_DATA] Data counts:', {
+            risks: loadedData.risks?.length || 0,
+            controls: loadedData.controls?.length || 0,
+            relationships: loadedData.relationships?.length || 0
+        });
+
         // Validate data structure
         if (!loadedData.risks || !loadedData.relationships) {
+            console.error('[HANDLE_DATA] Invalid data structure');
             throw new Error('Invalid data structure: missing required fields');
         }
 
         // Set global data
         data = loadedData;
+        console.log('[HANDLE_DATA] Global data set');
 
         // Show the main container now that data is loaded
         const container = document.querySelector('.container');
         if (container) {
+            console.log('[HANDLE_DATA] Setting container display to empty string (visible)');
             container.style.display = '';
         }
 
         // Initialize the visualization
-        init();
+        console.log('[HANDLE_DATA] Calling init()');
 
+        // Give the browser a moment to render the container with proper dimensions
+        setTimeout(() => {
+            console.log('[HANDLE_DATA] Delayed init() call');
+            init();
+            console.log('[HANDLE_DATA] Visualization initialized');
+        }, 100);
         logger.info('Visualization initialized with user data');
     } catch (error) {
+        console.error('[HANDLE_DATA] Error:', error);
         logger.error('Failed to initialize with loaded data', { error: error.message });
         showErrorMessage('Failed to load visualization. Please check your data format.');
     }
@@ -123,16 +159,24 @@ function showErrorMessage(message) {
 
 // Initialize the visualization (wrapped with error handler)
 const init = errorHandler.wrap(function() {
+    console.log('[INIT] init() function called');
+    console.log('[INIT] Data available:', !!data);
+
     if (!data) {
+        console.error('[INIT] No data available');
         throw new Error('No data available for visualization');
     }
-    
+
     const container = document.getElementById('knowledge-graph');
+    console.log('[INIT] Container found:', !!container);
+
     if (!container) {
+        console.error('[INIT] Container not found');
         throw new Error('Visualization container not found');
     }
-    
+
     const rect = container.getBoundingClientRect();
+    console.log('[INIT] Container dimensions:', rect.width, 'x', rect.height);
     width = rect.width;
     height = rect.height;
 
@@ -1082,6 +1126,7 @@ function setupEventListeners() {
 // Export functions for external use
 window.AuditVerse = {
     init: initApp,
+    handleDataLoaded,  // Add this for debugging
     updateVisualization,
     updateStats,
     selectNode,
@@ -1093,9 +1138,7 @@ window.AuditVerse = {
 export {
     initApp,
     handleDataLoaded,
-    createVisualization,
     updateVisualization,
-    setupEventListeners,
     updateStats,
     selectNode
 };

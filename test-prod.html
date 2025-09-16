@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Build Test</title>
+</head>
+<body>
+    <h1>Production Build Test</h1>
+    <div id="status">Loading...</div>
+    <div id="logs"></div>
+
+    <script>
+        const logs = [];
+        const logDiv = document.getElementById('logs');
+        const statusDiv = document.getElementById('status');
+
+        // Override console.log to capture logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const msg = args.join(' ');
+            logs.push('[LOG] ' + msg);
+            logDiv.innerHTML = logs.join('<br>');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            const msg = args.join(' ');
+            logs.push('[ERROR] ' + msg);
+            logDiv.innerHTML = logs.join('<br>');
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            const msg = args.join(' ');
+            logs.push('[WARN] ' + msg);
+            logDiv.innerHTML = logs.join('<br>');
+        };
+
+        // Load the production build in an iframe
+        const iframe = document.createElement('iframe');
+        iframe.src = 'http://localhost:3001';
+        iframe.style.width = '100%';
+        iframe.style.height = '600px';
+        iframe.style.border = '1px solid #ccc';
+
+        iframe.onload = function() {
+            statusDiv.textContent = 'Production build loaded in iframe';
+
+            // Try to access the iframe's content
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const welcomeScreen = iframeDoc.getElementById('welcome-screen');
+                const container = iframeDoc.querySelector('.container');
+
+                logs.push('Welcome screen found: ' + (welcomeScreen ? 'YES' : 'NO'));
+                logs.push('Container found: ' + (container ? 'YES' : 'NO'));
+                logs.push('Container display: ' + (container ? container.style.display : 'N/A'));
+
+                // Check if AuditVerse is defined
+                if (iframe.contentWindow.AuditVerse) {
+                    logs.push('window.AuditVerse is defined');
+                    logs.push('Available methods: ' + Object.keys(iframe.contentWindow.AuditVerse).join(', '));
+                } else {
+                    logs.push('window.AuditVerse is NOT defined');
+                }
+
+                logDiv.innerHTML = logs.join('<br>');
+            } catch (e) {
+                logs.push('Error accessing iframe: ' + e.message);
+                logDiv.innerHTML = logs.join('<br>');
+            }
+        };
+
+        document.body.appendChild(iframe);
+    </script>
+</body>
+</html>

@@ -479,8 +479,10 @@ button:focus,
    ================================= */
 
 /* Ensure all flex containers align properly */
-[class*="container"],
-[class*="group"],
+/* Note: Exclude .container class to preserve grid layout */
+.filters-container,
+.header-stats,
+[class*="group"]:not(.filter-group),
 [class*="panel"] {
     display: flex;
     align-items: center;
