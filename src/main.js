@@ -1,5 +1,9 @@
 // Main entry point for Vite
 import { initApp } from './js/main.js';
+import { inject } from '@vercel/analytics';
+
+// Initialize Vercel Analytics
+inject();
 
 // Re-export everything from the actual main file
 export * from './js/main.js';

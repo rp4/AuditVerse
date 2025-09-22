@@ -1045,8 +1045,179 @@ function initializePresetViews() {
     logger.debug('Preset views initialized');
 }
 
+// Get filtered data based on current selections
+function getFilteredData() {
+    if (!data) return null;
+
+    const filteredData = {};
+
+    // Filter risks based on selected risk types
+    if (activeFilters.has('risks') && data.risks) {
+        filteredData.risks = selectedRiskTypes.size > 0
+            ? data.risks.filter(r => selectedRiskTypes.has(r.category))
+            : data.risks;
+    }
+
+    // Filter controls
+    if (activeFilters.has('controls') && data.controls) {
+        filteredData.controls = data.controls;
+    }
+
+    // Filter issues
+    if (activeFilters.has('issues') && data.issues) {
+        filteredData.issues = data.issues;
+    }
+
+    // Filter incidents
+    if (activeFilters.has('incidents') && data.incidents) {
+        filteredData.incidents = data.incidents;
+    }
+
+    // Filter entities/business units
+    if (activeFilters.has('entities') && (data.businessUnits || data.entities)) {
+        const entities = data.businessUnits || data.entities;
+        filteredData.entities = selectedUnits.size > 0
+            ? entities.filter(e => selectedUnits.has(e.id))
+            : entities;
+    }
+
+    // Filter standards
+    if (activeFilters.has('standards') && data.standards) {
+        filteredData.standards = selectedStandards.size > 0
+            ? data.standards.filter(s => selectedStandards.has(s.id))
+            : data.standards;
+    }
+
+    // Filter audits
+    if (activeFilters.has('audits') && data.audits) {
+        filteredData.audits = selectedAudits.size > 0
+            ? data.audits.filter(a => selectedAudits.has(a.id))
+            : data.audits;
+    }
+
+    // Include relationships that connect the filtered entities
+    if (data.relationships) {
+        const allFilteredIds = new Set();
+
+        // Collect all filtered entity IDs
+        Object.values(filteredData).forEach(entityArray => {
+            if (Array.isArray(entityArray)) {
+                entityArray.forEach(entity => {
+                    if (entity.id) allFilteredIds.add(entity.id);
+                });
+            }
+        });
+
+        // Filter relationships to only include those connecting filtered entities
+        filteredData.relationships = data.relationships.filter(rel =>
+            allFilteredIds.has(rel.source) || allFilteredIds.has(rel.target)
+        );
+    }
+
+    // Add metadata about the export
+    filteredData.metadata = {
+        exportDate: new Date().toISOString(),
+        filters: {
+            activeEntityTypes: Array.from(activeFilters),
+            selectedAudits: Array.from(selectedAudits),
+            selectedUnits: Array.from(selectedUnits),
+            selectedStandards: Array.from(selectedStandards),
+            selectedRiskTypes: Array.from(selectedRiskTypes)
+        },
+        totalCounts: {
+            risks: filteredData.risks?.length || 0,
+            controls: filteredData.controls?.length || 0,
+            issues: filteredData.issues?.length || 0,
+            incidents: filteredData.incidents?.length || 0,
+            entities: filteredData.entities?.length || 0,
+            standards: filteredData.standards?.length || 0,
+            audits: filteredData.audits?.length || 0,
+            relationships: filteredData.relationships?.length || 0
+        }
+    };
+
+    return filteredData;
+}
+
+// Export filtered data as JSON
+function exportFilteredData() {
+    try {
+        const filteredData = getFilteredData();
+
+        if (!filteredData) {
+            showErrorMessage('No data available to export');
+            return;
+        }
+
+        // Check if there's any data to export
+        const hasData = Object.keys(filteredData).some(key =>
+            key !== 'metadata' && filteredData[key]?.length > 0
+        );
+
+        if (!hasData) {
+            showErrorMessage('No data matches the current filters');
+            return;
+        }
+
+        // Create blob and download
+        const jsonString = JSON.stringify(filteredData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        // Create download link
+        const a = document.createElement('a');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        a.href = url;
+        a.download = `auditverse-export-${timestamp}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Clean up
+        URL.revokeObjectURL(url);
+
+        // Show success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-notification';
+        successDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.9) 0%, rgba(0, 255, 204, 0.7) 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            font-family: 'Rajdhani', sans-serif;
+            animation: slide-in 0.3s ease-out;
+        `;
+        const itemCount = filteredData.metadata.totalCounts;
+        const totalItems = Object.values(itemCount).reduce((sum, count) => sum + count, 0);
+        successDiv.textContent = `Exported ${totalItems} items successfully`;
+
+        document.body.appendChild(successDiv);
+
+        setTimeout(() => {
+            successDiv.remove();
+        }, 3000);
+
+        logger.info('Data exported successfully', filteredData.metadata);
+    } catch (error) {
+        logger.error('Failed to export data', { error: error.message });
+        showErrorMessage('Failed to export data: ' + error.message);
+    }
+}
+
 // Set up event listeners
 function setupEventListeners() {
+    // Export button
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportFilteredData);
+        logger.debug('Export button event listener attached');
+    }
+
     // Risk mode toggle (residual vs inherent)
     const riskModeToggle = document.querySelector('.toggle-item[data-mode="toggle-risk"]');
     if (riskModeToggle) {
