@@ -11,7 +11,7 @@ export default defineConfig({
     port: 5173,
     open: false,
     cors: true,
-    host: 'localhost', // Changed from 0.0.0.0 for security
+    host: true, // Allow external connections (needed for WSL)
     strictPort: false,
   },
 

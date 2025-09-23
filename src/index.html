@@ -53,7 +53,7 @@
             min-height: 100vh;
             display: grid;
             grid-template-columns: 300px 1fr 350px;
-            grid-template-rows: auto 1fr auto;
+            grid-template-rows: auto 1fr min-content;
             grid-template-areas:
                 "header header header"
                 "controls graph details"
@@ -1390,6 +1390,8 @@
             justify-content: space-between;
             padding: 15px 30px;
             gap: 20px;
+            min-height: 80px;
+            flex-shrink: 0;
             position: relative;
             box-shadow:
                 inset 0 2px 6px rgba(0,0,0,0.6),
@@ -1803,7 +1805,7 @@
         @media (max-width: 1024px) {
             .container {
                 grid-template-columns: 1fr;
-                grid-template-rows: 80px auto 1fr 100px;
+                grid-template-rows: auto auto 1fr min-content;
                 grid-template-areas:
                     "header"
                     "controls"
@@ -1923,14 +1925,6 @@
                     <div class="stat-label">Coverage</div>
                     <div class="stat-value" id="coverage-percent">0%</div>
                 </div>
-                <button class="export-btn" id="export-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span>Export</span>
-                </button>
             </div>
         </header>
 
@@ -1969,27 +1963,27 @@
 
             <div class="control-section">
                 <h3 class="control-title">Entity Layers</h3>
-                <div class="entity-filter active" data-entity="controls">
+                <div class="entity-filter" data-entity="controls">
                     <div class="entity-icon" style="background: #00ccff;">🛡️</div>
                     <span>Controls</span>
                     <span class="coverage-percent" id="controls-coverage"></span>
                 </div>
-                <div class="entity-filter active" data-entity="issues">
+                <div class="entity-filter" data-entity="issues">
                     <div class="entity-icon" style="background: #ffff00;">⚠️</div>
                     <span>Issues</span>
                     <span class="coverage-percent" id="issues-coverage"></span>
                 </div>
-                <div class="entity-filter active" data-entity="incidents">
+                <div class="entity-filter" data-entity="incidents">
                     <div class="entity-icon" style="background: #ff0099;">🚨</div>
                     <span>Incidents</span>
                     <span class="coverage-percent" id="incidents-coverage"></span>
                 </div>
-                <div class="entity-filter active" data-entity="entities">
+                <div class="entity-filter" data-entity="entities">
                     <div class="entity-icon" style="background: #00ff99;">🏢</div>
                     <span>Business Units</span>
                     <span class="coverage-percent" id="entities-coverage"></span>
                 </div>
-                <div class="entity-filter active" data-entity="standards">
+                <div class="entity-filter" data-entity="standards">
                     <div class="entity-icon" style="background: #9966ff;">📋</div>
                     <span>Standards</span>
                     <span class="coverage-percent" id="standards-coverage"></span>
@@ -2090,8 +2084,7 @@
                     <option value="5">5x</option>
                 </select>
             </div>
-            <button class="btn" onclick="exportVisualization()">Export</button>
-            <button class="btn" onclick="toggleFullscreen()">Fullscreen</button>
+            <button class="btn" onclick="AuditVerse.exportFilteredData()">Export</button>
         </footer>
     </div>
 
@@ -4012,14 +4005,6 @@
             document.body.removeChild(downloadLink);
         }
 
-        // Fullscreen toggle
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        }
 
         // Window resize handler
         window.addEventListener('resize', () => {

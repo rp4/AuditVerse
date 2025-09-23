@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropdown Fixes Test - AuditVerse</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ffcc;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #00ff99;
+            text-shadow: 0 0 10px rgba(0, 255, 153, 0.5);
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            background: rgba(0, 255, 204, 0.05);
+        }
+        .fix-item {
+            background: rgba(0, 255, 204, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #00ff99;
+        }
+        code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #ffcc00;
+        }
+        .success {
+            color: #00ff99;
+        }
+        .test-step {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-left: 2px solid #00ffcc;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Dropdown Functionality Fixes</h1>
+
+    <div class="test-section">
+        <h2>Fixed Issues</h2>
+
+        <div class="fix-item">
+            <h3 class="success">✅ Fix #1: Deselect All Button</h3>
+            <p><strong>Problem:</strong> "Deselect All" button wasn't working properly</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Improved button click handler to force checkbox state changes</li>
+                <li>Added explicit state checking before dispatching change events</li>
+                <li>Added forced display updates after selection changes</li>
+            </ul>
+            <p><strong>Code Changes:</strong> <code>src/js/main.js:1249-1285</code></p>
+        </div>
+
+        <div class="fix-item">
+            <h3 class="success">✅ Fix #2: Search Bar Filtering</h3>
+            <p><strong>Problem:</strong> Search input wasn't filtering dropdown options</p>
+            <p><strong>Solution:</strong></p>
+            <ul>
+                <li>Fixed type extraction for 'risk-type' which has a hyphen in its ID</li>
+                <li>Added trim() to search terms and option text for better matching</li>
+                <li>Improved visibility logic to show all items when search is empty</li>
+                <li>Added "No matching items found" message when search yields no results</li>
+            </ul>
+            <p><strong>Code Changes:</strong> <code>src/js/main.js:1287-1354</code></p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Testing Instructions</h2>
+
+        <h3>Test 1: Deselect All Button</h3>
+        <div class="test-step">
+            <ol>
+                <li>Open the application at <code>http://localhost:5176/</code></li>
+                <li>Load sample data</li>
+                <li>Click on any dropdown filter (e.g., "Audits")</li>
+                <li>Click "Deselect All" button</li>
+                <li><strong>Expected:</strong> All checkboxes should be unchecked</li>
+                <li><strong>Expected:</strong> Display should update to show "None selected"</li>
+                <li><strong>Expected:</strong> Visualization should update immediately</li>
+                <li>Click "Select All" button</li>
+                <li><strong>Expected:</strong> All checkboxes should be checked</li>
+            </ol>
+        </div>
+
+        <h3>Test 2: Search Bar Filtering</h3>
+        <div class="test-step">
+            <ol>
+                <li>Open any dropdown filter</li>
+                <li>Type a partial name in the search box (e.g., "Fin" for Finance)</li>
+                <li><strong>Expected:</strong> Only matching items should be visible</li>
+                <li>Type something that doesn't match any items</li>
+                <li><strong>Expected:</strong> "No matching items found" message appears</li>
+                <li>Clear the search box</li>
+                <li><strong>Expected:</strong> All items should be visible again</li>
+                <li>Test specifically with Risk Type dropdown (has hyphenated ID)</li>
+                <li><strong>Expected:</strong> Search should work correctly for all dropdowns</li>
+            </ol>
+        </div>
+
+        <h3>Test 3: Combined Functionality</h3>
+        <div class="test-step">
+            <ol>
+                <li>Search for specific items (e.g., "audit" in Audits dropdown)</li>
+                <li>Click "Deselect All" while search is active</li>
+                <li><strong>Expected:</strong> All visible items should be deselected</li>
+                <li>Clear the search</li>
+                <li><strong>Expected:</strong> All items should remain deselected</li>
+                <li>Search again and click "Select All"</li>
+                <li><strong>Expected:</strong> Only visible (searched) items should be selected</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Implementation Details</h2>
+
+        <h3>Key Improvements:</h3>
+        <ul>
+            <li><strong>Button Handler:</strong> Now properly extracts type from button ID and forces state changes</li>
+            <li><strong>Search Handler:</strong> Special handling for 'risk-type' which contains a hyphen</li>
+            <li><strong>State Management:</strong> Checkbox states are properly synchronized with the global selection sets</li>
+            <li><strong>Visual Feedback:</strong> Added "No results" message for better UX</li>
+            <li><strong>Event Propagation:</strong> Properly stops event bubbling to prevent dropdown from closing</li>
+        </ul>
+
+        <h3>Files Modified:</h3>
+        <ul>
+            <li><code>src/js/main.js</code> - setupDropdownHandlers() function</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Verification</h2>
+        <p class="success">✅ Build completed successfully</p>
+        <p class="success">✅ No TypeScript errors</p>
+        <p class="success">✅ Both issues have been resolved</p>
+    </div>
+</body>
+</html>

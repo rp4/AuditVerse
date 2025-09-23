@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar Filters Test - AuditVerse</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ffcc;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #00ff99;
+            text-shadow: 0 0 10px rgba(0, 255, 153, 0.5);
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            background: rgba(0, 255, 204, 0.05);
+        }
+        .filter-info {
+            background: rgba(0, 255, 204, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #00ff99;
+        }
+        code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #ffcc00;
+        }
+        .important {
+            color: #ff0066;
+            font-weight: bold;
+        }
+        ul {
+            margin: 10px 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+        .formula {
+            background: #1a1a1a;
+            padding: 10px;
+            border: 1px solid #00ffcc;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Sidebar Filters Integration Test</h1>
+
+    <div class="test-section">
+        <h2>Overview</h2>
+        <p>The coverage calculation now integrates with ALL filters in the application, including:</p>
+        <ul>
+            <li>✅ <strong>Header Dropdown Filters:</strong> Audits, Business Units, Standards, Risk Types</li>
+            <li>✅ <strong>Left Sidebar Filters:</strong> Risk Threshold, Link Strength</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Filter Implementations</h2>
+
+        <div class="filter-info">
+            <h3>📊 Risk Threshold Filter</h3>
+            <p><strong>Location:</strong> Left sidebar slider (1-10)</p>
+            <p><strong>Default Value:</strong> 5</p>
+            <p><strong>How it works:</strong></p>
+            <ul>
+                <li>Filters risks based on their rating (inherent or residual depending on current mode)</li>
+                <li>Only risks with rating ≥ threshold are included in calculations</li>
+                <li>Affects both visualization opacity and coverage calculations</li>
+            </ul>
+            <div class="formula">
+                if (currentMode === 'inherent') {
+                    include risk if: risk.inherent_rating >= threshold
+                } else {
+                    include risk if: risk.residual_rating >= threshold
+                }
+            </div>
+        </div>
+
+        <div class="filter-info">
+            <h3>🔗 Link Strength Filter</h3>
+            <p><strong>Location:</strong> Left sidebar slider (0.0-1.0)</p>
+            <p><strong>Default Value:</strong> 0.5</p>
+            <p><strong>How it works:</strong></p>
+            <ul>
+                <li>This is a <span class="important">visual-only filter</span></li>
+                <li>Controls the visibility of links in the graph based on their computed visual strength</li>
+                <li>Does NOT affect coverage calculations (as link strength is a visual property, not a data property)</li>
+            </ul>
+            <p><em>Note: Link strength is calculated dynamically for visualization purposes based on relationship types and node properties.</em></p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Coverage Calculation Formula</h2>
+        <div class="formula">
+            Coverage % = (Risks linked to audits) / (Total filtered risks) × 100
+
+            Where:
+            - Risks linked to audits = Filtered risks with "assessed_by" relationships to filtered audits
+            - Total filtered risks = All risks that pass ALL active filters
+        </div>
+
+        <h3>Filter Application Order:</h3>
+        <ol>
+            <li><strong>Risk Threshold:</strong> Filter by rating threshold</li>
+            <li><strong>Risk Type:</strong> Filter by selected categories</li>
+            <li><strong>Business Units:</strong> Filter by "owned_by" relationships</li>
+            <li><strong>Standards:</strong> Filter by "requires" relationships</li>
+            <li><strong>Audits:</strong> Count only relationships to selected audits</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Testing Steps</h2>
+        <ol>
+            <li><strong>Open the application</strong> at <code>http://localhost:5176/</code></li>
+            <li><strong>Load sample data</strong></li>
+            <li><strong>Observe initial values:</strong>
+                <ul>
+                    <li>Total Audits: Count of audits assessing filtered risks</li>
+                    <li>Total Risks: Count of risks meeting all filters</li>
+                    <li>Coverage %: Percentage of filtered risks with audit relationships</li>
+                </ul>
+            </li>
+            <li><strong>Test Risk Threshold:</strong>
+                <ul>
+                    <li>Move slider to 7 (high risks only)</li>
+                    <li>Total Risks should decrease to show only risks with rating ≥ 7</li>
+                    <li>Coverage % should recalculate based on these high-risk items</li>
+                </ul>
+            </li>
+            <li><strong>Test Combined Filters:</strong>
+                <ul>
+                    <li>Set Risk Threshold to 6</li>
+                    <li>Select only "Operational" in Risk Types</li>
+                    <li>Select only "Finance" in Business Units</li>
+                    <li>Observe that Total Risks shows only operational risks ≥ 6 owned by Finance</li>
+                </ul>
+            </li>
+            <li><strong>Test Link Strength:</strong>
+                <ul>
+                    <li>Adjust Link Strength slider</li>
+                    <li>Links should appear/disappear in visualization</li>
+                    <li>Coverage % should NOT change (visual filter only)</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected Behaviors</h2>
+        <ul>
+            <li>✅ Risk Threshold changes immediately update Total Risks and Coverage %</li>
+            <li>✅ All dropdown filter changes update the statistics</li>
+            <li>✅ Link Strength only affects visual display, not calculations</li>
+            <li>✅ Total Audits shows audits that assess the filtered risks</li>
+            <li>✅ Total Risks shows count after ALL filters applied</li>
+            <li>✅ Coverage % accurately reflects the filtered data</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Implementation Details</h2>
+        <p><strong>File:</strong> <code>src/js/main.js</code></p>
+        <p><strong>Key Changes:</strong></p>
+        <ul>
+            <li>Added global variables: <code>currentRiskThreshold</code> and <code>currentLinkStrength</code></li>
+            <li>Updated <code>calculateFilteredCoverage()</code> to apply risk threshold filter</li>
+            <li>Added event listeners for both sidebar sliders</li>
+            <li>Risk threshold slider triggers <code>updateStats()</code> to recalculate coverage</li>
+            <li>Link strength slider only updates visual display</li>
+        </ul>
+    </div>
+</body>
+</html>

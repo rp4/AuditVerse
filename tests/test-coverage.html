@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coverage Calculation Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ffcc;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #00ffcc;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 255, 204, 0.1);
+        }
+        button {
+            background: #00ffcc;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #00ff99;
+        }
+    </style>
+</head>
+<body>
+    <h1>AuditVerse Coverage Calculation Test</h1>
+
+    <div class="test-section">
+        <h2>Test Scenario Explanation</h2>
+        <p>The header statistics now display:</p>
+        <ul>
+            <li><strong>Total Audits:</strong> Number of audit entities that assess the filtered risks (i.e., audits that have "assessed_by" relationships with filtered risks)</li>
+            <li><strong>Total Risks:</strong> Number of risk entities that meet all filter criteria</li>
+            <li><strong>Coverage %:</strong> Percentage calculated as (Risks linked to audits) / (Total filtered risks) × 100</li>
+        </ul>
+        <p><strong>Filters Applied:</strong> The calculation respects all header filters:</p>
+        <ul>
+            <li>Audits filter - only includes selected audits</li>
+            <li>Business Units filter - only includes risks owned by selected units</li>
+            <li>Standards filter - only includes risks requiring selected standards</li>
+            <li>Risk Type filter - only includes risks of selected categories</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Manual Test Steps</h2>
+        <ol>
+            <li>Open the application at <a href="http://localhost:5176/" target="_blank" style="color: #00ff99;">http://localhost:5176/</a></li>
+            <li>Load the comprehensive sample data</li>
+            <li>Observe the initial coverage percentage in the header (should reflect all risks)</li>
+            <li>Use the audit dropdown filter - deselect some audits
+                <ul><li>Coverage should update to show only risks linked to selected audits</li></ul>
+            </li>
+            <li>Use the business units dropdown filter - deselect some units
+                <ul><li>Coverage should update to show only risks owned by selected units AND linked to selected audits</li></ul>
+            </li>
+            <li>Use the standards dropdown filter - deselect some standards
+                <ul><li>Coverage should update to show only risks requiring selected standards AND matching other filters</li></ul>
+            </li>
+            <li>Use the risk type dropdown filter - deselect some risk types
+                <ul><li>Coverage should update to show only risks of selected categories AND matching other filters</li></ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected Behavior</h2>
+        <div class="result">
+            <h3>With All Filters Selected (Default):</h3>
+            <p>Coverage = (All risks with audit relationships) / (All risks) × 100%</p>
+        </div>
+        <div class="result">
+            <h3>With Some Audits Deselected:</h3>
+            <p>Coverage = (Risks linked to selected audits) / (All risks matching other filters) × 100%</p>
+        </div>
+        <div class="result">
+            <h3>With Multiple Filters Applied:</h3>
+            <p>Coverage = (Filtered risks that have audit relationships with selected audits) / (All risks matching all filters) × 100%</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Implementation Summary</h2>
+        <p>The coverage calculation has been updated in <code>src/js/main.js</code> with an enhanced <code>calculateFilteredCoverage()</code> function that:</p>
+        <ul>
+            <li>Filters audits based on the audit dropdown selection</li>
+            <li>Filters risks based on selected risk types, business units, and standards</li>
+            <li>Counts audits that have relationships with filtered risks (displays as "Total Audits")</li>
+            <li>Counts all filtered risks (displays as "Total Risks")</li>
+            <li>Counts how many filtered risks are linked to filtered audits (for coverage calculation)</li>
+            <li>Calculates the coverage percentage as: (risks linked to audits / total filtered risks) × 100</li>
+            <li>Updates all three values (Total Audits, Total Risks, Coverage %) automatically when any filter changes</li>
+        </ul>
+        <p><strong>Key Changes:</strong></p>
+        <ul>
+            <li>"Total Audits" now shows the count of audits that assess the filtered risks (not all audits)</li>
+            <li>"Total Risks" shows the count of risks that meet all filter criteria</li>
+            <li>"Coverage %" shows what percentage of filtered risks are covered by audits</li>
+        </ul>
+    </div>
+</body>
+</html>

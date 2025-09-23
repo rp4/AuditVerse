@@ -11,7 +11,7 @@ let svg, g, width, height;
 let simulation;
 let currentMode = 'residual';
 let selectedNode = null;
-let activeFilters = new Set(['controls', 'issues', 'incidents', 'entities', 'standards', 'audits', 'risks']);
+let activeFilters = new Set(['audits', 'risks']);
 let riskTypes = [];
 let animationInterval = null;
 let nodePositions = new Map(); // Store positions between updates
@@ -24,6 +24,10 @@ let selectedAudits = new Set();
 let selectedUnits = new Set();
 let selectedStandards = new Set();
 let selectedRiskTypes = new Set();
+
+// Global filter values
+let currentRiskThreshold = 5; // Default from HTML
+let currentLinkStrength = 0.5; // Default from HTML
 
 // Initialize the application
 async function initApp() {
@@ -79,32 +83,164 @@ async function initApp() {
     }
 }
 
+// Convert denormalized data to normalized format for internal use
+function convertToNormalized(denormalizedData) {
+    const normalizedData = {
+        relationships: []
+    };
+
+    // Track all entity IDs to build relationships
+    const entityIdMap = new Map();
+
+    // Process each entity type
+    const entityTypes = ['risks', 'controls', 'issues', 'incidents', 'entities', 'standards', 'audits', 'businessUnits'];
+
+    entityTypes.forEach(type => {
+        if (denormalizedData[type]) {
+            normalizedData[type] = [];
+
+            denormalizedData[type].forEach(entity => {
+                // Create a clean copy without connectedEntities
+                const cleanEntity = { ...entity };
+                delete cleanEntity.connectedEntities;
+
+                normalizedData[type].push(cleanEntity);
+
+                // Store entity info for relationship building
+                entityIdMap.set(entity.id, {
+                    type: type,
+                    name: entity.name || entity.title || entity.id
+                });
+            });
+        }
+    });
+
+    // Build relationships from connectedEntities
+    entityTypes.forEach(sourceType => {
+        if (denormalizedData[sourceType]) {
+            denormalizedData[sourceType].forEach(sourceEntity => {
+                if (sourceEntity.connectedEntities) {
+                    Object.entries(sourceEntity.connectedEntities).forEach(([targetType, targetNames]) => {
+                        if (Array.isArray(targetNames)) {
+                            targetNames.forEach(targetName => {
+                                // Find the target entity ID by name
+                                let targetId = null;
+
+                                // Search through the appropriate entity type
+                                const searchType = targetType.replace('_related', '');
+                                if (normalizedData[searchType]) {
+                                    const targetEntity = normalizedData[searchType].find(e =>
+                                        e.name === targetName || e.title === targetName
+                                    );
+                                    if (targetEntity) {
+                                        targetId = targetEntity.id;
+                                    }
+                                }
+
+                                // If not found in specific type, search all types
+                                if (!targetId) {
+                                    for (const type of entityTypes) {
+                                        if (normalizedData[type]) {
+                                            const targetEntity = normalizedData[type].find(e =>
+                                                e.name === targetName || e.title === targetName
+                                            );
+                                            if (targetEntity) {
+                                                targetId = targetEntity.id;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Create relationship if target found
+                                if (targetId) {
+                                    // Avoid duplicate relationships
+                                    const relationshipExists = normalizedData.relationships.some(rel =>
+                                        (rel.source === sourceEntity.id && rel.target === targetId) ||
+                                        (rel.source === targetId && rel.target === sourceEntity.id)
+                                    );
+
+                                    if (!relationshipExists) {
+                                        normalizedData.relationships.push({
+                                            source: sourceEntity.id,
+                                            target: targetId,
+                                            type: targetType.replace('_related', '')
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    // Copy over any metadata
+    if (denormalizedData.metadata) {
+        normalizedData.metadata = denormalizedData.metadata;
+    }
+
+    return normalizedData;
+}
+
+// Detect if data is in denormalized format
+function isDataDenormalized(data) {
+    // Check if any entity has connectedEntities field
+    const entityTypes = ['risks', 'controls', 'issues', 'incidents', 'entities', 'standards', 'audits', 'businessUnits'];
+
+    for (const type of entityTypes) {
+        if (data[type] && Array.isArray(data[type])) {
+            for (const entity of data[type]) {
+                if (entity.connectedEntities) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 // Handle data loaded from welcome screen
 function handleDataLoaded(loadedData) {
     console.log('[HANDLE_DATA] handleDataLoaded called with:', loadedData);
     try {
+        // Detect data format and convert if necessary
+        let processedData = loadedData;
+
+        if (isDataDenormalized(loadedData)) {
+            console.log('[HANDLE_DATA] Denormalized data detected, converting to normalized format');
+            processedData = convertToNormalized(loadedData);
+            logger.info('Converted denormalized data to normalized format');
+        } else if (!loadedData.relationships) {
+            // If no relationships array exists, create an empty one
+            processedData.relationships = [];
+            console.log('[HANDLE_DATA] No relationships found, created empty relationships array');
+        }
+
         logger.info('Data loaded from welcome screen', {
             recordCounts: {
-                risks: loadedData.risks?.length || 0,
-                controls: loadedData.controls?.length || 0,
-                relationships: loadedData.relationships?.length || 0
+                risks: processedData.risks?.length || 0,
+                controls: processedData.controls?.length || 0,
+                relationships: processedData.relationships?.length || 0
             }
         });
 
         console.log('[HANDLE_DATA] Data counts:', {
-            risks: loadedData.risks?.length || 0,
-            controls: loadedData.controls?.length || 0,
-            relationships: loadedData.relationships?.length || 0
+            risks: processedData.risks?.length || 0,
+            controls: processedData.controls?.length || 0,
+            relationships: processedData.relationships?.length || 0
         });
 
         // Validate data structure
-        if (!loadedData.risks || !loadedData.relationships) {
+        if (!processedData.risks) {
             console.error('[HANDLE_DATA] Invalid data structure');
-            throw new Error('Invalid data structure: missing required fields');
+            throw new Error('Invalid data structure: missing risks data');
         }
 
         // Set global data
-        data = loadedData;
+        data = processedData;
         console.log('[HANDLE_DATA] Global data set');
 
         // Show the main container now that data is loaded
@@ -582,11 +718,14 @@ const updateVisualization = errorHandler.wrap(function() {
                 d.fy = null;
             }));
 
-        logger.debug('Visualization updated', { 
-            nodeCount: riskNodes.length, 
+        logger.debug('Visualization updated', {
+            nodeCount: riskNodes.length,
             linkCount: links.length,
-            mode: currentMode 
+            mode: currentMode
         });
+
+        // Update statistics including coverage percentage
+        updateStats();
     } catch (error) {
         logger.error('Error updating visualization', { error: error.message });
         throw error;
@@ -850,7 +989,7 @@ function updateStats() {
             openIssues: data.issues?.filter(i => i.status === 'Open').length || 0,
             activeControls: data.controls?.length || 0
         };
-        
+
         // Update DOM elements if they exist
         const elements = {
             'total-risks': stats.totalRisks,
@@ -858,18 +997,139 @@ function updateStats() {
             'open-issues': stats.openIssues,
             'active-controls': stats.activeControls
         };
-        
+
         for (const [id, value] of Object.entries(elements)) {
             const element = document.getElementById(id);
             if (element) {
                 element.textContent = value;
             }
         }
-        
+
+        // Calculate coverage based on filtered data
+        calculateFilteredCoverage();
+
         logger.debug('Statistics updated', stats);
     } catch (error) {
         logger.error('Failed to update statistics', { error: error.message });
     }
+}
+
+// Calculate coverage percentage for filtered entities
+function calculateFilteredCoverage() {
+    if (!data || !data.relationships) {
+        const coverageElement = document.getElementById('coverage-percent');
+        if (coverageElement) {
+            coverageElement.textContent = '0%';
+        }
+        // Update totals to 0 when no data
+        const totalAuditsElement = document.getElementById('total-audits');
+        const totalRisksElement = document.getElementById('total-risks');
+        if (totalAuditsElement) totalAuditsElement.textContent = '0';
+        if (totalRisksElement) totalRisksElement.textContent = '0';
+        return;
+    }
+
+    // Get filtered audits based on current selections
+    let filteredAudits = data.audits || [];
+    if (selectedAudits.size > 0) {
+        filteredAudits = filteredAudits.filter(a => selectedAudits.has(a.id));
+    }
+
+    // Get filtered risks based on current selections
+    let filteredRisks = data.risks || [];
+
+    // Apply risk threshold filter
+    filteredRisks = filteredRisks.filter(r => {
+        const rating = currentMode === 'inherent' ? r.inherent_rating : r.residual_rating;
+        return rating >= currentRiskThreshold;
+    });
+
+    // Apply risk type filter
+    if (selectedRiskTypes.size > 0) {
+        filteredRisks = filteredRisks.filter(r => selectedRiskTypes.has(r.category));
+    }
+
+    // Apply business unit filter
+    if (selectedUnits.size > 0 && data.relationships) {
+        const riskIdsForUnits = new Set();
+        data.relationships.forEach(rel => {
+            if (rel.type === 'owned_by' && selectedUnits.has(rel.target)) {
+                const risk = data.risks?.find(r => r.id === rel.source);
+                if (risk) {
+                    riskIdsForUnits.add(risk.id);
+                }
+            }
+        });
+        filteredRisks = filteredRisks.filter(r => riskIdsForUnits.has(r.id));
+    }
+
+    // Apply standards filter
+    if (selectedStandards.size > 0 && data.relationships) {
+        const riskIdsForStandards = new Set();
+        data.relationships.forEach(rel => {
+            if (rel.type === 'requires' && selectedStandards.has(rel.target)) {
+                const risk = data.risks?.find(r => r.id === rel.source);
+                if (risk) {
+                    riskIdsForStandards.add(risk.id);
+                }
+            }
+        });
+        filteredRisks = filteredRisks.filter(r => riskIdsForStandards.has(r.id));
+    }
+
+    // Calculate risks linked to filtered audits (for coverage)
+    const risksLinkedToAudits = new Set();
+    const auditsWithRisks = new Set();
+
+    if (data.relationships) {
+        data.relationships.forEach(rel => {
+            if (rel.type === 'assessed_by') {
+                const risk = filteredRisks.find(r => r.id === rel.source);
+                const audit = filteredAudits.find(a => a.id === rel.target);
+
+                if (risk && audit) {
+                    risksLinkedToAudits.add(rel.source);
+                    auditsWithRisks.add(rel.target);
+                }
+            }
+        });
+    }
+
+    // Update Total Audits display (showing audits that assess filtered risks)
+    const totalAuditsElement = document.getElementById('total-audits');
+    if (totalAuditsElement) {
+        totalAuditsElement.textContent = auditsWithRisks.size;
+    }
+
+    // Update Total Risks display (showing filtered risks count)
+    const totalRisksElement = document.getElementById('total-risks');
+    if (totalRisksElement) {
+        totalRisksElement.textContent = filteredRisks.length;
+    }
+
+    // Calculate coverage percentage
+    const coverage = filteredRisks.length > 0
+        ? Math.round((risksLinkedToAudits.size / filteredRisks.length) * 100)
+        : 0;
+
+    // Update the coverage display
+    const coverageElement = document.getElementById('coverage-percent');
+    if (coverageElement) {
+        coverageElement.textContent = `${coverage}%`;
+    }
+
+    logger.debug('Coverage calculated', {
+        totalFilteredAudits: auditsWithRisks.size,
+        totalFilteredRisks: filteredRisks.length,
+        risksLinkedToAudits: risksLinkedToAudits.size,
+        coverage: coverage,
+        filters: {
+            audits: Array.from(selectedAudits),
+            units: Array.from(selectedUnits),
+            standards: Array.from(selectedStandards),
+            riskTypes: Array.from(selectedRiskTypes)
+        }
+    });
 }
 
 // Initialize dropdowns
@@ -935,6 +1195,7 @@ function populateDropdown(type, items) {
 
 // Setup dropdown event handlers
 function setupDropdownHandlers() {
+
     // Toggle dropdowns
     document.querySelectorAll('.filter-selected').forEach(selected => {
         selected.addEventListener('click', function(e) {
@@ -943,6 +1204,13 @@ function setupDropdownHandlers() {
             if (dropdown && dropdown.classList.contains('filter-dropdown')) {
                 dropdown.classList.toggle('active');
             }
+        });
+    });
+
+    // Prevent dropdown from closing when clicking inside it
+    document.querySelectorAll('.filter-dropdown').forEach(dropdown => {
+        dropdown.addEventListener('click', function(e) {
+            e.stopPropagation();
         });
     });
 
@@ -982,28 +1250,106 @@ function setupDropdownHandlers() {
     document.querySelectorAll('.filter-select-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            const isSelectAll = this.id.includes('select-all');
-            const type = this.id.split('-')[0];
+            e.preventDefault();
+            const btnId = this.id;
 
-            document.querySelectorAll(`#${type}-options-container .filter-checkbox`).forEach(checkbox => {
-                checkbox.checked = isSelectAll;
-                const changeEvent = new Event('change', { bubbles: true });
-                checkbox.dispatchEvent(changeEvent);
-            });
+            // Check if it's select-all (true) or deselect-all (false)
+            const isSelectAll = btnId.endsWith('select-all');
+            // Extract type from button ID (e.g., 'risk-type' from 'risk-type-select-all')
+            const type = btnId.replace('-select-all', '').replace('-deselect-all', '');
+
+            const container = document.getElementById(`${type}-options-container`);
+            if (container) {
+                const checkboxes = container.querySelectorAll('.filter-checkbox');
+
+                // Force all checkboxes to the desired state
+                checkboxes.forEach(checkbox => {
+                    // Always update the checkbox state, even if it appears to match
+                    const wasChecked = checkbox.checked;
+                    checkbox.checked = isSelectAll;
+
+                    // Only dispatch event if state actually changed
+                    if (wasChecked !== isSelectAll) {
+                        const changeEvent = new Event('change', { bubbles: true });
+                        checkbox.dispatchEvent(changeEvent);
+                    }
+                });
+
+                // Force update of the display
+                updateDropdownDisplay(type);
+                updateVisualization();
+            } else {
+                logger.error(`Container not found for type: ${type}`);
+            }
         });
     });
 
     // Search functionality
     document.querySelectorAll('.filter-search-input').forEach(input => {
-        input.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const type = this.id.split('-')[0];
+        // Prevent dropdown from closing when interacting with search input
+        input.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        input.addEventListener('keydown', function(e) {
+            e.stopPropagation();
+        });
+
+        input.addEventListener('keyup', function(e) {
+            e.stopPropagation();
+        });
+
+        input.addEventListener('focus', function(e) {
+            e.stopPropagation();
+        });
+
+        input.addEventListener('input', function(e) {
+            e.stopPropagation();
+            const searchTerm = this.value.toLowerCase().trim();
+
+            // Extract type from ID (handles both 'audit-search-input' and 'risk-type-search-input')
+            const inputId = this.id;
+            let type;
+
+            if (inputId.includes('risk-type')) {
+                type = 'risk-type';
+            } else {
+                type = inputId.split('-')[0];
+            }
+
             const container = document.getElementById(`${type}-options-container`);
 
-            container.querySelectorAll('.filter-option').forEach(option => {
-                const label = option.querySelector('label').textContent.toLowerCase();
-                option.style.display = label.includes(searchTerm) ? 'flex' : 'none';
-            });
+            if (container) {
+                const options = container.querySelectorAll('.filter-option');
+
+                let visibleCount = 0;
+                options.forEach(option => {
+                    const label = option.querySelector('label');
+                    if (label) {
+                        const text = label.textContent.toLowerCase().trim();
+                        const visible = searchTerm === '' || text.includes(searchTerm);
+                        option.style.display = visible ? 'flex' : 'none';
+                        if (visible) visibleCount++;
+                    }
+                });
+
+                // Add a "no results" message if needed
+                let noResultsMsg = container.querySelector('.no-results-message');
+                if (visibleCount === 0 && searchTerm !== '') {
+                    if (!noResultsMsg) {
+                        noResultsMsg = document.createElement('div');
+                        noResultsMsg.className = 'no-results-message';
+                        noResultsMsg.style.cssText = 'padding: 10px; color: #888; text-align: center; font-style: italic;';
+                        noResultsMsg.textContent = 'No matching items found';
+                        container.appendChild(noResultsMsg);
+                    }
+                    noResultsMsg.style.display = 'block';
+                } else if (noResultsMsg) {
+                    noResultsMsg.style.display = 'none';
+                }
+            } else {
+                logger.error(`Container not found for type: ${type}`);
+            }
         });
     });
 }
@@ -1045,52 +1391,155 @@ function initializePresetViews() {
     logger.debug('Preset views initialized');
 }
 
+// Convert normalized data to denormalized format with embedded relationships
+function convertToDenormalized(normalizedData) {
+    if (!normalizedData) return null;
+
+    // Create lookup maps for all entity types
+    const entityMaps = {};
+    const entityTypes = ['risks', 'controls', 'issues', 'incidents', 'entities', 'standards', 'audits'];
+
+    entityTypes.forEach(type => {
+        if (normalizedData[type]) {
+            entityMaps[type] = new Map();
+            normalizedData[type].forEach(entity => {
+                entityMaps[type].set(entity.id, entity);
+            });
+        }
+    });
+
+    // Helper function to get entity name by ID
+    const getEntityName = (id) => {
+        for (const type of entityTypes) {
+            if (entityMaps[type]?.has(id)) {
+                return entityMaps[type].get(id).name || entityMaps[type].get(id).title || id;
+            }
+        }
+        return id; // Fallback to ID if not found
+    };
+
+    // Helper function to determine entity type
+    const getEntityType = (id) => {
+        for (const type of entityTypes) {
+            if (entityMaps[type]?.has(id)) {
+                return type;
+            }
+        }
+        return 'unknown';
+    };
+
+    // Build relationship mappings for each entity
+    const relationshipMap = new Map();
+
+    if (normalizedData.relationships) {
+        normalizedData.relationships.forEach(rel => {
+            // Add forward relationship
+            if (!relationshipMap.has(rel.source)) {
+                relationshipMap.set(rel.source, {});
+            }
+            const sourceRels = relationshipMap.get(rel.source);
+            const targetType = getEntityType(rel.target);
+            const targetName = getEntityName(rel.target);
+
+            if (!sourceRels[targetType]) {
+                sourceRels[targetType] = [];
+            }
+            if (!sourceRels[targetType].includes(targetName)) {
+                sourceRels[targetType].push(targetName);
+            }
+
+            // Add reverse relationship
+            if (!relationshipMap.has(rel.target)) {
+                relationshipMap.set(rel.target, {});
+            }
+            const targetRels = relationshipMap.get(rel.target);
+            const sourceType = getEntityType(rel.source);
+            const sourceName = getEntityName(rel.source);
+
+            // Use relationship type to determine the reverse relationship name
+            const reverseRelType = sourceType + '_related';
+            if (!targetRels[reverseRelType]) {
+                targetRels[reverseRelType] = [];
+            }
+            if (!targetRels[reverseRelType].includes(sourceName)) {
+                targetRels[reverseRelType].push(sourceName);
+            }
+        });
+    }
+
+    // Create denormalized data with embedded relationships
+    const denormalizedData = {};
+
+    entityTypes.forEach(type => {
+        if (normalizedData[type]) {
+            denormalizedData[type] = normalizedData[type].map(entity => {
+                const denormalizedEntity = { ...entity };
+
+                // Add connected entities
+                const connections = relationshipMap.get(entity.id);
+                if (connections) {
+                    denormalizedEntity.connectedEntities = connections;
+                }
+
+                return denormalizedEntity;
+            });
+        }
+    });
+
+    // Add metadata
+    if (normalizedData.metadata) {
+        denormalizedData.metadata = normalizedData.metadata;
+    }
+
+    return denormalizedData;
+}
+
 // Get filtered data based on current selections
 function getFilteredData() {
     if (!data) return null;
 
-    const filteredData = {};
+    const normalizedData = {};
 
     // Filter risks based on selected risk types
     if (activeFilters.has('risks') && data.risks) {
-        filteredData.risks = selectedRiskTypes.size > 0
+        normalizedData.risks = selectedRiskTypes.size > 0
             ? data.risks.filter(r => selectedRiskTypes.has(r.category))
             : data.risks;
     }
 
     // Filter controls
     if (activeFilters.has('controls') && data.controls) {
-        filteredData.controls = data.controls;
+        normalizedData.controls = data.controls;
     }
 
     // Filter issues
     if (activeFilters.has('issues') && data.issues) {
-        filteredData.issues = data.issues;
+        normalizedData.issues = data.issues;
     }
 
     // Filter incidents
     if (activeFilters.has('incidents') && data.incidents) {
-        filteredData.incidents = data.incidents;
+        normalizedData.incidents = data.incidents;
     }
 
     // Filter entities/business units
     if (activeFilters.has('entities') && (data.businessUnits || data.entities)) {
         const entities = data.businessUnits || data.entities;
-        filteredData.entities = selectedUnits.size > 0
+        normalizedData.entities = selectedUnits.size > 0
             ? entities.filter(e => selectedUnits.has(e.id))
             : entities;
     }
 
     // Filter standards
     if (activeFilters.has('standards') && data.standards) {
-        filteredData.standards = selectedStandards.size > 0
+        normalizedData.standards = selectedStandards.size > 0
             ? data.standards.filter(s => selectedStandards.has(s.id))
             : data.standards;
     }
 
     // Filter audits
     if (activeFilters.has('audits') && data.audits) {
-        filteredData.audits = selectedAudits.size > 0
+        normalizedData.audits = selectedAudits.size > 0
             ? data.audits.filter(a => selectedAudits.has(a.id))
             : data.audits;
     }
@@ -1100,7 +1549,7 @@ function getFilteredData() {
         const allFilteredIds = new Set();
 
         // Collect all filtered entity IDs
-        Object.values(filteredData).forEach(entityArray => {
+        Object.values(normalizedData).forEach(entityArray => {
             if (Array.isArray(entityArray)) {
                 entityArray.forEach(entity => {
                     if (entity.id) allFilteredIds.add(entity.id);
@@ -1109,13 +1558,14 @@ function getFilteredData() {
         });
 
         // Filter relationships to only include those connecting filtered entities
-        filteredData.relationships = data.relationships.filter(rel =>
-            allFilteredIds.has(rel.source) || allFilteredIds.has(rel.target)
+        // Both source AND target must be in the filtered set
+        normalizedData.relationships = data.relationships.filter(rel =>
+            allFilteredIds.has(rel.source) && allFilteredIds.has(rel.target)
         );
     }
 
     // Add metadata about the export
-    filteredData.metadata = {
+    normalizedData.metadata = {
         exportDate: new Date().toISOString(),
         filters: {
             activeEntityTypes: Array.from(activeFilters),
@@ -1125,18 +1575,19 @@ function getFilteredData() {
             selectedRiskTypes: Array.from(selectedRiskTypes)
         },
         totalCounts: {
-            risks: filteredData.risks?.length || 0,
-            controls: filteredData.controls?.length || 0,
-            issues: filteredData.issues?.length || 0,
-            incidents: filteredData.incidents?.length || 0,
-            entities: filteredData.entities?.length || 0,
-            standards: filteredData.standards?.length || 0,
-            audits: filteredData.audits?.length || 0,
-            relationships: filteredData.relationships?.length || 0
+            risks: normalizedData.risks?.length || 0,
+            controls: normalizedData.controls?.length || 0,
+            issues: normalizedData.issues?.length || 0,
+            incidents: normalizedData.incidents?.length || 0,
+            entities: normalizedData.entities?.length || 0,
+            standards: normalizedData.standards?.length || 0,
+            audits: normalizedData.audits?.length || 0,
+            relationships: normalizedData.relationships?.length || 0
         }
     };
 
-    return filteredData;
+    // Convert to denormalized format for export
+    return convertToDenormalized(normalizedData);
 }
 
 // Export filtered data as JSON
@@ -1267,17 +1718,38 @@ function setupEventListeners() {
     if (thresholdSlider) {
         thresholdSlider.addEventListener('input', function() {
             document.getElementById('threshold-value').textContent = this.value;
+            // Update global threshold
+            currentRiskThreshold = parseFloat(this.value);
+
             // Filter nodes based on threshold
-            const threshold = parseFloat(this.value);
-            
             g.selectAll('.risk-node')
                 .style('opacity', d => {
                     const rating = currentMode === 'inherent' ? d.inherent_rating : d.residual_rating;
-                    return rating >= threshold ? 1 : 0.2;
+                    return rating >= currentRiskThreshold ? 1 : 0.2;
                 });
+
+            // Update statistics including coverage
+            updateStats();
         });
     }
-    
+
+    // Link strength slider
+    const linkStrengthSlider = document.getElementById('link-strength');
+    if (linkStrengthSlider) {
+        linkStrengthSlider.addEventListener('input', function() {
+            document.getElementById('strength-value').textContent = this.value;
+            // Update global link strength
+            currentLinkStrength = parseFloat(this.value);
+
+            // Filter links based on strength (visual only)
+            g.selectAll('.link')
+                .style('display', d => d.strength >= currentLinkStrength ? 'block' : 'none');
+
+            // Note: Link strength is a visual filter only and doesn't affect coverage calculations
+            // since it's based on computed visual strength, not actual data relationships
+        });
+    }
+
     // Window resize
     window.addEventListener('resize', () => {
         const container = document.getElementById('knowledge-graph');
@@ -1286,9 +1758,11 @@ function setupEventListeners() {
         const rect = container.getBoundingClientRect();
         width = rect.width;
         height = rect.height;
-        
-        svg.attr('width', width).attr('height', height);
-        updateVisualization();
+
+        if (svg) {
+            svg.attr('width', width).attr('height', height);
+            updateVisualization();
+        }
     });
     
     logger.debug('Event listeners set up');
@@ -1302,7 +1776,8 @@ window.AuditVerse = {
     updateStats,
     selectNode,
     currentMode,
-    data
+    data,
+    exportFilteredData
 };
 
 // Export for ES modules
