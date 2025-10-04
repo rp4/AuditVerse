@@ -57,7 +57,13 @@ export default defineConfig({
           const dataFile = resolve(__dirname, 'src/data/comprehensiveSampleData.json');
           if (existsSync(dataFile)) {
             copyFileSync(dataFile, resolve(__dirname, 'dist/data/comprehensiveSampleData.json'));
-            console.log('Data files copied to dist');
+            console.log('comprehensiveSampleData.json copied to dist');
+          }
+
+          const snapshotsFile = resolve(__dirname, 'src/data/historicalSnapshots.json');
+          if (existsSync(snapshotsFile)) {
+            copyFileSync(snapshotsFile, resolve(__dirname, 'dist/data/historicalSnapshots.json'));
+            console.log('historicalSnapshots.json copied to dist');
           }
 
           // Copy public assets (including Auditverse.png)

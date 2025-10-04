@@ -4,9 +4,12 @@ import { errorHandler } from '../services/errorHandler.js';
 import { validator } from '../services/validator.js';
 import config from '../config/index.js';
 import { WelcomeScreen } from '../components/WelcomeScreen.js';
+import { applyPresetView } from '../services/presetViews.js';
+import { TimelinePlayer, loadHistoricalSnapshots } from '../services/timelinePlayer.js';
 
 // Global variables
 let data = null;
+let baseData = null; // Store original data before timeline modifications
 let svg, g, width, height;
 let simulation;
 let currentMode = 'residual';
@@ -18,6 +21,7 @@ let nodePositions = new Map(); // Store positions between updates
 let timelineValue = 0;
 let isAnimating = false;
 let appInitialized = false; // Track initialization state
+let timelinePlayer = null; // Timeline playback controller
 
 // Global selection states
 let selectedAudits = new Set();
@@ -28,6 +32,7 @@ let selectedRiskTypes = new Set();
 // Global filter values
 let currentRiskThreshold = 5; // Default from HTML
 let currentLinkStrength = 0.5; // Default from HTML
+let currentPresetView = 'default'; // Track active preset view
 
 // Initialize the application
 async function initApp() {
@@ -241,7 +246,22 @@ function handleDataLoaded(loadedData) {
 
         // Set global data
         data = processedData;
+        baseData = JSON.parse(JSON.stringify(processedData)); // Store original data
         console.log('[HANDLE_DATA] Global data set');
+
+        // Load historical snapshots and initialize timeline
+        loadHistoricalSnapshots().then(snapshotsData => {
+            if (snapshotsData) {
+                console.log('[TIMELINE] Historical snapshots loaded:', snapshotsData.snapshots?.length || 0);
+                timelinePlayer = new TimelinePlayer(snapshotsData, handleSnapshotChange);
+                setupTimelineControls();
+                updateTimelineDisplay();
+            } else {
+                console.warn('[TIMELINE] No historical snapshots available');
+            }
+        }).catch(error => {
+            console.error('[TIMELINE] Failed to load historical snapshots:', error);
+        });
 
         // Show the main container now that data is loaded
         const container = document.querySelector('.container');
@@ -991,8 +1011,8 @@ function updateStats() {
         };
 
         // Update DOM elements if they exist
+        // Note: total-risks and total-audits are updated by calculateFilteredCoverage()
         const elements = {
-            'total-risks': stats.totalRisks,
             'high-risks': stats.highRisks,
             'open-issues': stats.openIssues,
             'active-controls': stats.activeControls
@@ -1038,11 +1058,8 @@ function calculateFilteredCoverage() {
     // Get filtered risks based on current selections
     let filteredRisks = data.risks || [];
 
-    // Apply risk threshold filter
-    filteredRisks = filteredRisks.filter(r => {
-        const rating = currentMode === 'inherent' ? r.inherent_rating : r.residual_rating;
-        return rating >= currentRiskThreshold;
-    });
+    // Note: Risk threshold is a visual filter only (dims nodes below threshold)
+    // It should NOT exclude risks from the count since they're still visible on the graph
 
     // Apply risk type filter
     if (selectedRiskTypes.size > 0) {
@@ -1095,20 +1112,26 @@ function calculateFilteredCoverage() {
         });
     }
 
-    // Update Total Audits display (showing audits that assess filtered risks)
+    // Update Total Audits display (showing all filtered audits that are visible)
+    // Only count if audits layer is visible
     const totalAuditsElement = document.getElementById('total-audits');
     if (totalAuditsElement) {
-        totalAuditsElement.textContent = auditsWithRisks.size;
+        const visibleAuditsCount = activeFilters.has('audits') ? filteredAudits.length : 0;
+        totalAuditsElement.textContent = visibleAuditsCount;
     }
 
     // Update Total Risks display (showing filtered risks count)
+    // Only count if risks layer is visible
     const totalRisksElement = document.getElementById('total-risks');
     if (totalRisksElement) {
-        totalRisksElement.textContent = filteredRisks.length;
+        const visibleRisksCount = activeFilters.has('risks') ? filteredRisks.length : 0;
+        totalRisksElement.textContent = visibleRisksCount;
     }
 
     // Calculate coverage percentage
-    const coverage = filteredRisks.length > 0
+    // Coverage is the percentage of visible risks that have at least one audit connection
+    // Only calculate if both audits and risks layers are visible
+    const coverage = (activeFilters.has('audits') && activeFilters.has('risks') && filteredRisks.length > 0)
         ? Math.round((risksLinkedToAudits.size / filteredRisks.length) * 100)
         : 0;
 
@@ -1352,6 +1375,159 @@ function setupDropdownHandlers() {
             }
         });
     });
+
+    // Setup preset views handler
+    setupPresetViewsHandler();
+}
+
+// Setup preset views dropdown handler
+function setupPresetViewsHandler() {
+    const presetDropdown = document.getElementById('preset-dropdown');
+    const presetOptions = document.getElementById('preset-options-container');
+    const presetDisplay = document.getElementById('preset-display');
+    const presetMessage = document.getElementById('preset-message');
+
+    if (!presetOptions) {
+        console.warn('Preset options container not found');
+        return;
+    }
+
+    // Handle preset view selection
+    presetOptions.addEventListener('click', function(e) {
+        const option = e.target.closest('.filter-option');
+        if (!option || option.classList.contains('preset-category-header')) return;
+
+        const viewId = option.dataset.value;
+
+        // Update selected state
+        presetOptions.querySelectorAll('.filter-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        option.classList.add('selected');
+
+        // Update display
+        const viewText = option.textContent.trim();
+        presetDisplay.textContent = viewText;
+
+        // Close dropdown
+        if (presetDropdown) {
+            presetDropdown.classList.remove('active');
+        }
+
+        // Apply preset view
+        applyPresetViewFilter(viewId);
+    });
+}
+
+// Apply a preset view filter
+function applyPresetViewFilter(viewId) {
+    if (!data) {
+        console.warn('No data loaded');
+        return;
+    }
+
+    currentPresetView = viewId;
+
+    if (viewId === 'default') {
+        // Reset to default view - clear all manual filters
+        activeFilters = new Set(['audits', 'risks']);
+        selectedAudits.clear();
+        selectedUnits.clear();
+        selectedStandards.clear();
+        selectedRiskTypes.clear();
+
+        // Update message
+        const presetMessage = document.getElementById('preset-message');
+        if (presetMessage) {
+            presetMessage.textContent = '';
+        }
+
+        updateVisualization();
+        return;
+    }
+
+    // Apply the preset view
+    const result = applyPresetView(viewId, data);
+
+    if (!result) {
+        console.error(`Failed to apply preset view: ${viewId}`);
+        showErrorMessage('Failed to apply preset view');
+        return;
+    }
+
+    // Update active filters based on the preset
+    if (result.activeFilters) {
+        activeFilters = new Set(result.activeFilters);
+    }
+
+    // Update entity layer checkboxes to match activeFilters
+    document.querySelectorAll('.entity-filter').forEach(filter => {
+        const entityType = filter.dataset.entity;
+        if (activeFilters.has(entityType)) {
+            filter.classList.add('active');
+        } else {
+            filter.classList.remove('active');
+        }
+    });
+
+    // Update the message
+    const presetMessage = document.getElementById('preset-message');
+    if (presetMessage && result.message) {
+        presetMessage.textContent = result.message;
+    }
+
+    // Log metrics if available
+    if (result.metrics) {
+        console.log('Preset View Metrics:', result.metrics);
+    }
+
+    // Update visualization with filtered data
+    updateVisualizationWithPresetData(result);
+}
+
+// Update visualization with preset-filtered data
+function updateVisualizationWithPresetData(presetResult) {
+    if (!presetResult) return;
+
+    const { nodes, links } = presetResult;
+
+    if (!nodes || nodes.length === 0) {
+        const message = presetResult.message || 'No data matches this preset view';
+        console.log('Preset view message:', message);
+        // Still call updateVisualization to clear the graph
+        updateVisualization();
+        return;
+    }
+
+    // Temporarily replace data with filtered results
+    const originalData = { ...data };
+
+    // Create a filtered data structure
+    const filteredData = {
+        ...originalData,
+        risks: nodes.filter(n => n.entity === 'Risk' || n.type === 'risk'),
+        controls: nodes.filter(n => n.type === 'control'),
+        issues: nodes.filter(n => n.type === 'issue'),
+        incidents: nodes.filter(n => n.type === 'incident'),
+        businessUnits: nodes.filter(n => n.type === 'businessUnit'),
+        entities: nodes.filter(n => n.type === 'entity'),
+        standards: nodes.filter(n => n.type === 'standard'),
+        audits: nodes.filter(n => n.type === 'audit'),
+        relationships: links || []
+    };
+
+    // Temporarily replace global data
+    const tempData = data;
+    data = filteredData;
+
+    // Update visualization
+    updateVisualization();
+
+    // Restore original data
+    data = tempData;
+
+    // Update stats
+    updateStats();
 }
 
 // Update dropdown display text
@@ -1766,6 +1942,191 @@ function setupEventListeners() {
     });
     
     logger.debug('Event listeners set up');
+}
+
+// Timeline Control Functions
+function setupTimelineControls() {
+    if (!timelinePlayer) return;
+
+    const playBtn = document.getElementById('play-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const timelineSlider = document.getElementById('timeline-slider');
+    const speedSelect = document.getElementById('speed-select');
+
+    if (playBtn) {
+        playBtn.addEventListener('click', () => {
+            if (timelinePlayer) {
+                timelinePlayer.play();
+                updateTimelineDisplay();
+            }
+        });
+    }
+
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', () => {
+            if (timelinePlayer) {
+                timelinePlayer.pause();
+                updateTimelineDisplay();
+            }
+        });
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (timelinePlayer) {
+                timelinePlayer.reset();
+                updateTimelineDisplay();
+            }
+        });
+    }
+
+    // Timeline slider - allows manual navigation through snapshots
+    if (timelineSlider) {
+        timelineSlider.max = timelinePlayer.getSnapshotCount() - 1;
+        timelineSlider.value = timelinePlayer.currentIndex;
+
+        timelineSlider.addEventListener('input', (e) => {
+            if (timelinePlayer) {
+                timelinePlayer.pause();
+                timelinePlayer.jumpTo(parseInt(e.target.value));
+            }
+        });
+    }
+
+    // Speed control
+    if (speedSelect) {
+        speedSelect.addEventListener('change', (e) => {
+            if (timelinePlayer) {
+                const speed = parseFloat(e.target.value);
+                // Convert speed multiplier to milliseconds (2000ms base / speed)
+                const newSpeed = 2000 / speed;
+                timelinePlayer.setSpeed(newSpeed);
+            }
+        });
+    }
+
+    console.log('[TIMELINE] Timeline controls setup complete');
+}
+
+function handleSnapshotChange(snapshot, index, events) {
+    if (!snapshot || !baseData) return;
+
+    console.log('[TIMELINE] Snapshot change:', snapshot.month, 'Index:', index);
+
+    // Apply snapshot to base data
+    const snapshotData = timelinePlayer.applySnapshotToData(baseData, snapshot);
+
+    // Update global data with snapshot
+    data = snapshotData;
+
+    // Update visualization
+    updateVisualization();
+    updateStats();
+
+    // Update timeline display
+    updateTimelineDisplay();
+
+    // Show snapshot summary
+    showSnapshotSummary(snapshot, events);
+}
+
+function updateTimelineDisplay() {
+    if (!timelinePlayer) return;
+
+    const stats = timelinePlayer.getCurrentStats();
+    if (!stats) return;
+
+    // Update timeline display text
+    const timelineDisplay = document.getElementById('timeline-display');
+    if (timelineDisplay) {
+        const snapshotNum = timelinePlayer.currentIndex + 1;
+        const totalSnapshots = timelinePlayer.getSnapshotCount();
+        timelineDisplay.textContent = `${stats.month} (${snapshotNum}/${totalSnapshots})`;
+    }
+
+    // Update slider position
+    const timelineSlider = document.getElementById('timeline-slider');
+    if (timelineSlider) {
+        timelineSlider.value = timelinePlayer.currentIndex;
+    }
+
+    // Update button states
+    const playBtn = document.getElementById('play-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+
+    if (playBtn && pauseBtn) {
+        if (timelinePlayer.getIsPlaying()) {
+            playBtn.style.opacity = '0.5';
+            pauseBtn.style.opacity = '1';
+        } else {
+            playBtn.style.opacity = '1';
+            pauseBtn.style.opacity = '0.5';
+        }
+    }
+
+    console.log('[TIMELINE] Display updated:', {
+        displayedMonth: stats.month,
+        snapshotNumber: timelinePlayer.currentIndex + 1,
+        totalSnapshots: timelinePlayer.getSnapshotCount(),
+        date: stats.date
+    });
+}
+
+function showSnapshotSummary(snapshot, events) {
+    // Create or update a notification showing what happened in this period
+    let summaryDiv = document.getElementById('snapshot-summary');
+
+    if (!summaryDiv) {
+        summaryDiv = document.createElement('div');
+        summaryDiv.id = 'snapshot-summary';
+        summaryDiv.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            background: rgba(42, 42, 47, 0.95);
+            border: 2px solid #00ffcc;
+            border-radius: 8px;
+            padding: 15px 20px;
+            max-width: 400px;
+            z-index: 9999;
+            font-family: 'Rajdhani', sans-serif;
+            color: #00ffcc;
+            animation: slideInLeft 0.3s ease-out;
+        `;
+        document.body.appendChild(summaryDiv);
+    }
+
+    const snapshotNum = timelinePlayer.currentIndex + 1;
+    const totalSnapshots = timelinePlayer.getSnapshotCount();
+
+    let content = `<div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 10px;">${snapshot.month}</div>`;
+    content += `<div style="font-size: 0.75rem; margin-bottom: 5px; color: rgba(0,255,204,0.6);">Snapshot ${snapshotNum} of ${totalSnapshots} • ${snapshot.date}</div>`;
+    content += `<div style="font-size: 0.9rem; margin-bottom: 10px; color: rgba(255,255,255,0.8);">${snapshot.summary}</div>`;
+
+    if (events && events.length > 0) {
+        content += `<div style="font-size: 0.85rem; margin-top: 10px; border-top: 1px solid rgba(0,255,204,0.3); padding-top: 8px;">`;
+        content += `<div style="font-weight: 600; margin-bottom: 5px;">Key Events:</div>`;
+        events.forEach(event => {
+            const icon = event.type === 'incident_critical' ? '🚨' :
+                        event.type === 'audit_completed' ? '✅' :
+                        event.type === 'risk_added' ? '⚠️' : '📌';
+            content += `<div style="margin: 3px 0;">${icon} ${event.title}</div>`;
+        });
+        content += `</div>`;
+    }
+
+    summaryDiv.innerHTML = content;
+
+    // Auto-hide after 5 seconds if paused
+    if (!timelinePlayer.getIsPlaying()) {
+        setTimeout(() => {
+            if (summaryDiv && !timelinePlayer.getIsPlaying()) {
+                summaryDiv.style.opacity = '0';
+                setTimeout(() => summaryDiv?.remove(), 300);
+            }
+        }, 5000);
+    }
 }
 
 // Export functions for external use
