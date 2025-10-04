@@ -454,14 +454,14 @@ const updateVisualization = errorHandler.wrap(function() {
         // Get current risk positions from filtered data
         let riskNodes = (filteredData.risks || []).map(r => ({
             ...r,
-            x: currentMode === 'inherent' ? 
-                (r.inherent_likelihood / 10) * width : 
+            x: currentMode === 'inherent' ?
+                (r.inherent_likelihood / 10) * width :
                 (r.residual_likelihood / 10) * width,
-            y: currentMode === 'inherent' ? 
-                height - (r.inherent_severity / 10) * height : 
+            y: currentMode === 'inherent' ?
+                height - (r.inherent_severity / 10) * height :
                 height - (r.residual_severity / 10) * height,
-            radius: currentMode === 'inherent' ? 
-                Math.sqrt(r.inherent_rating) * 8 : 
+            radius: currentMode === 'inherent' ?
+                Math.sqrt(r.inherent_rating) * 8 :
                 Math.sqrt(r.residual_rating) * 8,
             type: 'risk'
         }));
@@ -486,10 +486,8 @@ const updateVisualization = errorHandler.wrap(function() {
             // Add circles for risk nodes
             riskNode.append('circle')
                 .attr('r', d => d.radius)
-                .attr('fill', '#ff0066')
+                .attr('fill', '#ff0044')
                 .attr('fill-opacity', 0.8)
-                .attr('stroke', '#ff0099')
-                .attr('stroke-width', 2)
                 .style('filter', 'url(#glow)')
                 .on('click', function(event, d) {
                     event.stopPropagation();
@@ -691,7 +689,7 @@ const updateVisualization = errorHandler.wrap(function() {
                 incident: '#ff0099',
                 businessUnit: '#00ff99',
                 standard: '#9966ff',
-                audit: '#ff00ff'
+                audit: '#ff6600'
             };
 
             const color = colors[d.entityType] || '#ffffff';
@@ -701,8 +699,6 @@ const updateVisualization = errorHandler.wrap(function() {
                 .attr('r', 10)
                 .attr('fill', color)
                 .attr('fill-opacity', 0.7)
-                .attr('stroke', color)
-                .attr('stroke-width', 1.5)
                 .style('filter', 'url(#glow)');
 
             // Add click handler
@@ -732,7 +728,7 @@ const updateVisualization = errorHandler.wrap(function() {
                     incident: '#ff0099',
                     businessUnit: '#00ff99',
                     standard: '#9966ff',
-                    audit: '#ff00ff'
+                    audit: '#ff6600'
                 };
                 return colors[d.target.entityType] || '#00ffcc';
             })
@@ -996,12 +992,12 @@ function updateDetailsPanel(node) {
 
                 // Determine entity color based on type
                 let entityColor = '#00ffcc';
-                if (otherNode.type === 'control' || data.controls?.some(c => c.id === otherNode.id)) entityColor = '#00ccff';
+                if (otherNode.type === 'risk' || data.risks?.some(r => r.id === otherNode.id)) entityColor = '#ff0044';
+                else if (otherNode.type === 'control' || data.controls?.some(c => c.id === otherNode.id)) entityColor = '#00ccff';
                 else if (otherNode.type === 'issue' || data.issues?.some(i => i.id === otherNode.id)) entityColor = '#ffff00';
                 else if (otherNode.type === 'incident' || data.incidents?.some(i => i.id === otherNode.id)) entityColor = '#ff0099';
-                else if (otherNode.type === 'audit' || data.audits?.some(a => a.id === otherNode.id)) entityColor = '#ff00ff';
+                else if (otherNode.type === 'audit' || data.audits?.some(a => a.id === otherNode.id)) entityColor = '#ff6600';
                 else if (otherNode.type === 'standard' || data.standards?.some(s => s.id === otherNode.id)) entityColor = '#9966ff';
-                else if (otherNode.type === 'risk') entityColor = '#ff0066';
 
                 item.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
@@ -1758,6 +1754,25 @@ function getFilteredDataForVisualization() {
     return applyAllFilters(baseState, filterState);
 }
 
+// Check if a node exists in the current filtered data
+function checkNodeExistsInFilteredData(nodeId) {
+    const filteredData = getFilteredDataForVisualization();
+    if (!filteredData) return false;
+
+    // Check across all entity types
+    const allNodes = [
+        ...(filteredData.risks || []),
+        ...(filteredData.controls || []),
+        ...(filteredData.issues || []),
+        ...(filteredData.incidents || []),
+        ...(filteredData.businessUnits || filteredData.entities || []),
+        ...(filteredData.standards || []),
+        ...(filteredData.audits || [])
+    ];
+
+    return allNodes.some(node => node.id === nodeId);
+}
+
 // Get filtered data based on current selections (for export)
 function getFilteredData() {
     if (!data) return null;
@@ -2063,6 +2078,9 @@ function handleSnapshotChange(snapshot, index, events) {
 
     console.log('[TIMELINE] Snapshot change:', snapshot.month, 'Index:', index);
 
+    // Store current selection before updating visualization
+    const previouslySelectedNode = selectedNode;
+
     // Set current snapshot date (this triggers temporal filtering)
     currentSnapshotDate = new Date(snapshot.date);
 
@@ -2071,6 +2089,19 @@ function handleSnapshotChange(snapshot, index, events) {
     // Update visualization and stats (they'll automatically use the temporal filter)
     updateVisualization();
     updateStats();
+
+    // Re-apply selection if a node was previously selected
+    if (previouslySelectedNode) {
+        // Check if the node still exists in the current filtered data
+        const nodeStillExists = checkNodeExistsInFilteredData(previouslySelectedNode.id);
+        if (nodeStillExists) {
+            // Re-select the node after visualization update
+            selectNode(previouslySelectedNode);
+        } else {
+            // Node no longer exists in this time period, clear selection
+            selectedNode = null;
+        }
+    }
 
     // Update timeline display
     updateTimelineDisplay();
@@ -2088,9 +2119,7 @@ function updateTimelineDisplay() {
     // Update timeline display text
     const timelineDisplay = document.getElementById('timeline-display');
     if (timelineDisplay) {
-        const snapshotNum = timelinePlayer.currentIndex + 1;
-        const totalSnapshots = timelinePlayer.getSnapshotCount();
-        timelineDisplay.textContent = `${stats.month} (${snapshotNum}/${totalSnapshots})`;
+        timelineDisplay.textContent = `${stats.month}`;
     }
 
     // Update slider position
