@@ -5,7 +5,8 @@ import { validator } from '../services/validator.js';
 import config from '../config/index.js';
 import { WelcomeScreen } from '../components/WelcomeScreen.js';
 import { applyPresetView } from '../services/presetViews.js';
-import { TimelinePlayer, loadHistoricalSnapshots } from '../services/timelinePlayer.js';
+import { TimelinePlayer } from '../services/timelinePlayer.js';
+import { TemporalFilter, validateDataFormat } from '../services/temporalFilter.js';
 
 // Global variables
 let data = null;
@@ -22,6 +23,8 @@ let timelineValue = 0;
 let isAnimating = false;
 let appInitialized = false; // Track initialization state
 let timelinePlayer = null; // Timeline playback controller
+let temporalFilter = null; // Temporal filter instance for event-based filtering
+let currentSnapshotDate = null; // Current snapshot date (null = current/latest)
 
 // Global selection states
 let selectedAudits = new Set();
@@ -209,59 +212,83 @@ function isDataDenormalized(data) {
 
 // Handle data loaded from welcome screen
 function handleDataLoaded(loadedData) {
-    console.log('[HANDLE_DATA] handleDataLoaded called with:', loadedData);
+    console.log('[HANDLE_DATA] handleDataLoaded called');
     try {
-        // Detect data format and convert if necessary
+        // Validate data format
+        const formatValidation = validateDataFormat(loadedData);
+        if (!formatValidation.valid) {
+            console.error('[HANDLE_DATA] Invalid data format:', formatValidation.errors);
+            throw new Error('Invalid data format: ' + formatValidation.errors.join(', '));
+        }
+
         let processedData = loadedData;
 
-        if (isDataDenormalized(loadedData)) {
-            console.log('[HANDLE_DATA] Denormalized data detected, converting to normalized format');
-            processedData = convertToNormalized(loadedData);
-            logger.info('Converted denormalized data to normalized format');
-        } else if (!loadedData.relationships) {
-            // If no relationships array exists, create an empty one
-            processedData.relationships = [];
-            console.log('[HANDLE_DATA] No relationships found, created empty relationships array');
+        // Validate and normalize current data if needed
+        if (isDataDenormalized(processedData.current)) {
+            console.log('[HANDLE_DATA] Denormalized current data detected, converting');
+            processedData.current = convertToNormalized(processedData.current);
+        } else if (!processedData.current.relationships) {
+            processedData.current.relationships = [];
         }
+
+        // Initialize temporal filter
+        temporalFilter = new TemporalFilter(processedData);
+        const timelineValidation = temporalFilter.validateTimeline();
+        if (!timelineValidation.valid) {
+            console.error('[HANDLE_DATA] Timeline validation errors:', timelineValidation.errors);
+            throw new Error('Invalid timeline: ' + timelineValidation.errors.join(', '));
+        }
+        if (timelineValidation.warnings.length > 0) {
+            console.warn('[HANDLE_DATA] Timeline validation warnings:', timelineValidation.warnings);
+        }
+        console.log(`[HANDLE_DATA] Timeline initialized with ${timelineValidation.eventCount} events`);
 
         logger.info('Data loaded from welcome screen', {
             recordCounts: {
-                risks: processedData.risks?.length || 0,
-                controls: processedData.controls?.length || 0,
-                relationships: processedData.relationships?.length || 0
-            }
+                risks: processedData.current?.risks?.length || 0,
+                controls: processedData.current?.controls?.length || 0,
+                relationships: processedData.current?.relationships?.length || 0
+            },
+            hasTimeline: !!processedData.timeline,
+            timelineEvents: processedData.timeline?.events?.length || 0
         });
 
         console.log('[HANDLE_DATA] Data counts:', {
-            risks: processedData.risks?.length || 0,
-            controls: processedData.controls?.length || 0,
-            relationships: processedData.relationships?.length || 0
+            risks: processedData.current?.risks?.length || 0,
+            controls: processedData.current?.controls?.length || 0,
+            relationships: processedData.current?.relationships?.length || 0,
+            timelineEvents: processedData.timeline?.events?.length || 0
         });
 
         // Validate data structure
-        if (!processedData.risks) {
+        if (!processedData.current || !processedData.current.risks) {
             console.error('[HANDLE_DATA] Invalid data structure');
             throw new Error('Invalid data structure: missing risks data');
         }
 
         // Set global data
-        data = processedData;
-        baseData = JSON.parse(JSON.stringify(processedData)); // Store original data
+        data = processedData.current; // Current state (not temporally filtered yet)
+        baseData = processedData; // Full dataset including timeline
+        currentSnapshotDate = null; // Start with current view
         console.log('[HANDLE_DATA] Global data set');
 
-        // Load historical snapshots and initialize timeline
-        loadHistoricalSnapshots().then(snapshotsData => {
-            if (snapshotsData) {
-                console.log('[TIMELINE] Historical snapshots loaded:', snapshotsData.snapshots?.length || 0);
-                timelinePlayer = new TimelinePlayer(snapshotsData, handleSnapshotChange);
-                setupTimelineControls();
-                updateTimelineDisplay();
-            } else {
-                console.warn('[TIMELINE] No historical snapshots available');
-            }
-        }).catch(error => {
-            console.error('[TIMELINE] Failed to load historical snapshots:', error);
-        });
+        // Initialize timeline player
+        if (processedData.timeline.snapshots.length > 0) {
+            console.log('[TIMELINE] Initializing timeline with', processedData.timeline.snapshots.length, 'snapshots');
+            const timelineData = {
+                snapshots: processedData.timeline.snapshots.map(snapshot => ({
+                    date: snapshot.date,
+                    month: snapshot.label || snapshot.date,
+                    summary: snapshot.summary || `Snapshot as of ${snapshot.date}`
+                })),
+                keyEvents: []
+            };
+            timelinePlayer = new TimelinePlayer(timelineData, handleSnapshotChange);
+            setupTimelineControls();
+            updateTimelineDisplay();
+        } else {
+            console.log('[TIMELINE] No snapshots defined in timeline');
+        }
 
         // Show the main container now that data is loaded
         const container = document.querySelector('.container');
@@ -409,15 +436,23 @@ const updateVisualization = errorHandler.wrap(function() {
         logger.warn('Cannot update visualization: missing data or SVG group');
         return;
     }
-    
+
     try {
+        // Get filtered data (includes all active filters + temporal filter)
+        const filteredData = getFilteredDataForVisualization();
+
+        if (!filteredData) {
+            logger.warn('Filtered data is null');
+            return;
+        }
+
         // Clear previous elements
         g.selectAll('.links').remove();
         g.selectAll('.nodes').remove();
         g.selectAll('.orbits').remove();
 
-        // Get current risk positions
-        let riskNodes = data.risks.map(r => ({
+        // Get current risk positions from filtered data
+        let riskNodes = (filteredData.risks || []).map(r => ({
             ...r,
             x: currentMode === 'inherent' ? 
                 (r.inherent_likelihood / 10) * width : 
@@ -475,8 +510,8 @@ const updateVisualization = errorHandler.wrap(function() {
         const visibleEntities = [];
 
         // Collect entities based on active filters and preserve positions
-        if (activeFilters.has('controls') && data.controls) {
-            data.controls.forEach(c => {
+        if (activeFilters.has('controls') && filteredData.controls) {
+            filteredData.controls.forEach(c => {
                 const stored = nodePositions.get(c.id);
                 visibleEntities.push({
                     ...c,
@@ -489,8 +524,8 @@ const updateVisualization = errorHandler.wrap(function() {
             });
         }
 
-        if (activeFilters.has('issues') && data.issues) {
-            data.issues.forEach(i => {
+        if (activeFilters.has('issues') && filteredData.issues) {
+            filteredData.issues.forEach(i => {
                 const stored = nodePositions.get(i.id);
                 visibleEntities.push({
                     ...i,
@@ -503,8 +538,8 @@ const updateVisualization = errorHandler.wrap(function() {
             });
         }
 
-        if (activeFilters.has('incidents') && data.incidents) {
-            data.incidents.forEach(inc => {
+        if (activeFilters.has('incidents') && filteredData.incidents) {
+            filteredData.incidents.forEach(inc => {
                 const stored = nodePositions.get(inc.id);
                 visibleEntities.push({
                     ...inc,
@@ -517,8 +552,8 @@ const updateVisualization = errorHandler.wrap(function() {
             });
         }
 
-        if (activeFilters.has('entities') && (data.businessUnits || data.entities)) {
-            (data.businessUnits || data.entities).forEach(e => {
+        if (activeFilters.has('entities') && (filteredData.businessUnits || filteredData.entities)) {
+            (filteredData.businessUnits || filteredData.entities).forEach(e => {
                 const stored = nodePositions.get(e.id);
                 visibleEntities.push({
                     ...e,
@@ -531,8 +566,8 @@ const updateVisualization = errorHandler.wrap(function() {
             });
         }
 
-        if (activeFilters.has('standards') && data.standards) {
-            data.standards.forEach(s => {
+        if (activeFilters.has('standards') && filteredData.standards) {
+            filteredData.standards.forEach(s => {
                 const stored = nodePositions.get(s.id);
                 visibleEntities.push({
                     ...s,
@@ -545,8 +580,8 @@ const updateVisualization = errorHandler.wrap(function() {
             });
         }
 
-        if (activeFilters.has('audits') && data.audits) {
-            data.audits.forEach(a => {
+        if (activeFilters.has('audits') && filteredData.audits) {
+            filteredData.audits.forEach(a => {
                 const stored = nodePositions.get(a.id);
                 visibleEntities.push({
                     ...a,
@@ -563,7 +598,7 @@ const updateVisualization = errorHandler.wrap(function() {
         visibleEntities.forEach(entity => {
             if (!entity.x || !entity.y) {
                 const connectedRisks = [];
-                data.relationships.forEach(rel => {
+                filteredData.relationships.forEach(rel => {
                     if (rel.target === entity.id && activeFilters.has('risks')) {
                         const risk = riskNodes.find(r => r.id === rel.source);
                         if (risk) connectedRisks.push(risk);
@@ -595,7 +630,7 @@ const updateVisualization = errorHandler.wrap(function() {
 
         // Create links array before drawing nodes
         const links = [];
-        data.relationships.forEach(rel => {
+        filteredData.relationships.forEach(rel => {
             if (activeFilters.has('risks')) {
                 const sourceRisk = riskNodes.find(r => r.id === rel.source);
                 const targetEntity = visibleEntities.find(e => e.id === rel.target);
@@ -1036,7 +1071,10 @@ function updateStats() {
 
 // Calculate coverage percentage for filtered entities
 function calculateFilteredCoverage() {
-    if (!data || !data.relationships) {
+    // Get filtered data (includes all active filters + temporal filter)
+    const filteredData = getFilteredDataForVisualization();
+
+    if (!filteredData || !filteredData.relationships) {
         const coverageElement = document.getElementById('coverage-percent');
         if (coverageElement) {
             coverageElement.textContent = '0%';
@@ -1049,68 +1087,27 @@ function calculateFilteredCoverage() {
         return;
     }
 
-    // Get filtered audits based on current selections
-    let filteredAudits = data.audits || [];
-    if (selectedAudits.size > 0) {
-        filteredAudits = filteredAudits.filter(a => selectedAudits.has(a.id));
-    }
+    const filteredRisks = filteredData.risks || [];
+    const filteredAudits = filteredData.audits || [];
 
-    // Get filtered risks based on current selections
-    let filteredRisks = data.risks || [];
-
-    // Note: Risk threshold is a visual filter only (dims nodes below threshold)
-    // It should NOT exclude risks from the count since they're still visible on the graph
-
-    // Apply risk type filter
-    if (selectedRiskTypes.size > 0) {
-        filteredRisks = filteredRisks.filter(r => selectedRiskTypes.has(r.category));
-    }
-
-    // Apply business unit filter
-    if (selectedUnits.size > 0 && data.relationships) {
-        const riskIdsForUnits = new Set();
-        data.relationships.forEach(rel => {
-            if (rel.type === 'owned_by' && selectedUnits.has(rel.target)) {
-                const risk = data.risks?.find(r => r.id === rel.source);
-                if (risk) {
-                    riskIdsForUnits.add(risk.id);
-                }
-            }
-        });
-        filteredRisks = filteredRisks.filter(r => riskIdsForUnits.has(r.id));
-    }
-
-    // Apply standards filter
-    if (selectedStandards.size > 0 && data.relationships) {
-        const riskIdsForStandards = new Set();
-        data.relationships.forEach(rel => {
-            if (rel.type === 'requires' && selectedStandards.has(rel.target)) {
-                const risk = data.risks?.find(r => r.id === rel.source);
-                if (risk) {
-                    riskIdsForStandards.add(risk.id);
-                }
-            }
-        });
-        filteredRisks = filteredRisks.filter(r => riskIdsForStandards.has(r.id));
-    }
+    // Debug: Log the risk count
+    console.log('[STATS] Calculating stats with', filteredRisks.length, 'filtered risks');
 
     // Calculate risks linked to filtered audits (for coverage)
     const risksLinkedToAudits = new Set();
     const auditsWithRisks = new Set();
 
-    if (data.relationships) {
-        data.relationships.forEach(rel => {
-            if (rel.type === 'assessed_by') {
-                const risk = filteredRisks.find(r => r.id === rel.source);
-                const audit = filteredAudits.find(a => a.id === rel.target);
+    filteredData.relationships.forEach(rel => {
+        if (rel.type === 'assessed_by') {
+            const risk = filteredRisks.find(r => r.id === rel.source);
+            const audit = filteredAudits.find(a => a.id === rel.target);
 
-                if (risk && audit) {
-                    risksLinkedToAudits.add(rel.source);
-                    auditsWithRisks.add(rel.target);
-                }
+            if (risk && audit) {
+                risksLinkedToAudits.add(rel.source);
+                auditsWithRisks.add(rel.target);
             }
-        });
-    }
+        }
+    });
 
     // Update Total Audits display (showing all filtered audits that are visible)
     // Only count if audits layer is visible
@@ -1435,6 +1432,7 @@ function applyPresetViewFilter(viewId) {
         selectedUnits.clear();
         selectedStandards.clear();
         selectedRiskTypes.clear();
+        currentSnapshotDate = null; // Also reset timeline to current
 
         // Update message
         const presetMessage = document.getElementById('preset-message');
@@ -1446,8 +1444,13 @@ function applyPresetViewFilter(viewId) {
         return;
     }
 
-    // Apply the preset view
-    const result = applyPresetView(viewId, data);
+    // Get data with temporal filter applied (if active)
+    const baseState = currentSnapshotDate && temporalFilter
+        ? temporalFilter.applyEventsUpTo(currentSnapshotDate)
+        : data;
+
+    // Apply the preset view to temporally-filtered data
+    const result = applyPresetView(viewId, baseState);
 
     if (!result) {
         console.error(`Failed to apply preset view: ${viewId}`);
@@ -1670,100 +1673,140 @@ function convertToDenormalized(normalizedData) {
     return denormalizedData;
 }
 
-// Get filtered data based on current selections
-function getFilteredData() {
-    if (!data) return null;
+// Apply all filters in unified pipeline
+function applyAllFilters(baseState, filterState) {
+    let filtered = { ...baseState };
 
-    const normalizedData = {};
-
-    // Filter risks based on selected risk types
-    if (activeFilters.has('risks') && data.risks) {
-        normalizedData.risks = selectedRiskTypes.size > 0
-            ? data.risks.filter(r => selectedRiskTypes.has(r.category))
-            : data.risks;
-    }
-
-    // Filter controls
-    if (activeFilters.has('controls') && data.controls) {
-        normalizedData.controls = data.controls;
-    }
-
-    // Filter issues
-    if (activeFilters.has('issues') && data.issues) {
-        normalizedData.issues = data.issues;
-    }
-
-    // Filter incidents
-    if (activeFilters.has('incidents') && data.incidents) {
-        normalizedData.incidents = data.incidents;
-    }
-
-    // Filter entities/business units
-    if (activeFilters.has('entities') && (data.businessUnits || data.entities)) {
-        const entities = data.businessUnits || data.entities;
-        normalizedData.entities = selectedUnits.size > 0
-            ? entities.filter(e => selectedUnits.has(e.id))
-            : entities;
-    }
-
-    // Filter standards
-    if (activeFilters.has('standards') && data.standards) {
-        normalizedData.standards = selectedStandards.size > 0
-            ? data.standards.filter(s => selectedStandards.has(s.id))
-            : data.standards;
-    }
-
-    // Filter audits
-    if (activeFilters.has('audits') && data.audits) {
-        normalizedData.audits = selectedAudits.size > 0
-            ? data.audits.filter(a => selectedAudits.has(a.id))
-            : data.audits;
-    }
-
-    // Include relationships that connect the filtered entities
-    if (data.relationships) {
-        const allFilteredIds = new Set();
-
-        // Collect all filtered entity IDs
-        Object.values(normalizedData).forEach(entityArray => {
-            if (Array.isArray(entityArray)) {
-                entityArray.forEach(entity => {
-                    if (entity.id) allFilteredIds.add(entity.id);
-                });
-            }
-        });
-
-        // Filter relationships to only include those connecting filtered entities
-        // Both source AND target must be in the filtered set
-        normalizedData.relationships = data.relationships.filter(rel =>
-            allFilteredIds.has(rel.source) && allFilteredIds.has(rel.target)
+    // Apply risk type filter
+    if (filterState.selectedRiskTypes.size > 0) {
+        filtered.risks = (filtered.risks || []).filter(r =>
+            filterState.selectedRiskTypes.has(r.category)
         );
     }
 
-    // Add metadata about the export
-    normalizedData.metadata = {
+    // Apply business unit filter
+    if (filterState.selectedUnits.size > 0) {
+        const riskIdsForUnits = new Set();
+        (filtered.relationships || []).forEach(rel => {
+            if (rel.type === 'owned_by' && filterState.selectedUnits.has(rel.target)) {
+                riskIdsForUnits.add(rel.source);
+            }
+        });
+        filtered.risks = (filtered.risks || []).filter(r => riskIdsForUnits.has(r.id));
+    }
+
+    // Apply standards filter
+    if (filterState.selectedStandards.size > 0) {
+        const riskIdsForStandards = new Set();
+        (filtered.relationships || []).forEach(rel => {
+            if (rel.type === 'requires' && filterState.selectedStandards.has(rel.target)) {
+                riskIdsForStandards.add(rel.source);
+            }
+        });
+        filtered.risks = (filtered.risks || []).filter(r => riskIdsForStandards.has(r.id));
+    }
+
+    // Apply audit filter
+    if (filterState.selectedAudits.size > 0) {
+        filtered.audits = (filtered.audits || []).filter(a =>
+            filterState.selectedAudits.has(a.id)
+        );
+    }
+
+    // Apply entity layer filter
+    if (!filterState.activeFilters.has('risks')) filtered.risks = [];
+    if (!filterState.activeFilters.has('controls')) filtered.controls = [];
+    if (!filterState.activeFilters.has('issues')) filtered.issues = [];
+    if (!filterState.activeFilters.has('incidents')) filtered.incidents = [];
+    if (!filterState.activeFilters.has('entities')) filtered.businessUnits = [];
+    if (!filterState.activeFilters.has('standards')) filtered.standards = [];
+    if (!filterState.activeFilters.has('audits')) filtered.audits = [];
+
+    // Filter relationships to only show connections between visible entities
+    const visibleIds = new Set();
+    ['risks', 'controls', 'issues', 'incidents', 'businessUnits', 'standards', 'audits'].forEach(type => {
+        (filtered[type] || []).forEach(entity => visibleIds.add(entity.id));
+    });
+
+    filtered.relationships = (filtered.relationships || []).filter(rel =>
+        visibleIds.has(rel.source) && visibleIds.has(rel.target)
+    );
+
+    return filtered;
+}
+
+// Get filtered data for visualization (includes temporal filter)
+function getFilteredDataForVisualization() {
+    if (!data) return null;
+
+    // Get temporal snapshot if selected
+    const baseState = currentSnapshotDate && temporalFilter
+        ? temporalFilter.applyEventsUpTo(currentSnapshotDate)
+        : data;
+
+    // Apply all other filters
+    const filterState = {
+        temporalFilter,
+        currentSnapshotDate,
+        selectedRiskTypes,
+        selectedUnits,
+        selectedStandards,
+        selectedAudits,
+        activeFilters
+    };
+
+    return applyAllFilters(baseState, filterState);
+}
+
+// Get filtered data based on current selections (for export)
+function getFilteredData() {
+    if (!data) return null;
+
+    // Get current state (temporal filtering applied if needed)
+    const baseState = currentSnapshotDate && temporalFilter
+        ? temporalFilter.applyEventsUpTo(currentSnapshotDate)
+        : data;
+
+    // Apply all filters through pipeline
+    const filterState = {
+        temporalFilter,
+        currentSnapshotDate,
+        selectedRiskTypes,
+        selectedUnits,
+        selectedStandards,
+        selectedAudits,
+        activeFilters
+    };
+
+    const filtered = applyAllFilters(baseState, filterState);
+
+    // Add export metadata
+    filtered.metadata = {
         exportDate: new Date().toISOString(),
+        snapshotDate: currentSnapshotDate?.toISOString() || 'current',
         filters: {
             activeEntityTypes: Array.from(activeFilters),
             selectedAudits: Array.from(selectedAudits),
             selectedUnits: Array.from(selectedUnits),
             selectedStandards: Array.from(selectedStandards),
-            selectedRiskTypes: Array.from(selectedRiskTypes)
+            selectedRiskTypes: Array.from(selectedRiskTypes),
+            riskThreshold: currentRiskThreshold,
+            linkStrength: currentLinkStrength
         },
         totalCounts: {
-            risks: normalizedData.risks?.length || 0,
-            controls: normalizedData.controls?.length || 0,
-            issues: normalizedData.issues?.length || 0,
-            incidents: normalizedData.incidents?.length || 0,
-            entities: normalizedData.entities?.length || 0,
-            standards: normalizedData.standards?.length || 0,
-            audits: normalizedData.audits?.length || 0,
-            relationships: normalizedData.relationships?.length || 0
+            risks: filtered.risks?.length || 0,
+            controls: filtered.controls?.length || 0,
+            issues: filtered.issues?.length || 0,
+            incidents: filtered.incidents?.length || 0,
+            entities: filtered.businessUnits?.length || 0,
+            standards: filtered.standards?.length || 0,
+            audits: filtered.audits?.length || 0,
+            relationships: filtered.relationships?.length || 0
         }
     };
 
     // Convert to denormalized format for export
-    return convertToDenormalized(normalizedData);
+    return convertToDenormalized(filtered);
 }
 
 // Export filtered data as JSON
@@ -1976,6 +2019,12 @@ function setupTimelineControls() {
         resetBtn.addEventListener('click', () => {
             if (timelinePlayer) {
                 timelinePlayer.reset();
+                // Clear temporal filter to return to current view
+                currentSnapshotDate = null;
+                console.log('[TIMELINE] Reset to current view');
+                // Update visualization to show current state
+                updateVisualization();
+                updateStats();
                 updateTimelineDisplay();
             }
         });
@@ -2010,17 +2059,16 @@ function setupTimelineControls() {
 }
 
 function handleSnapshotChange(snapshot, index, events) {
-    if (!snapshot || !baseData) return;
+    if (!snapshot || !temporalFilter) return;
 
     console.log('[TIMELINE] Snapshot change:', snapshot.month, 'Index:', index);
 
-    // Apply snapshot to base data
-    const snapshotData = timelinePlayer.applySnapshotToData(baseData, snapshot);
+    // Set current snapshot date (this triggers temporal filtering)
+    currentSnapshotDate = new Date(snapshot.date);
 
-    // Update global data with snapshot
-    data = snapshotData;
+    console.log('[TIMELINE] Temporal filter active for date:', currentSnapshotDate.toISOString());
 
-    // Update visualization
+    // Update visualization and stats (they'll automatically use the temporal filter)
     updateVisualization();
     updateStats();
 

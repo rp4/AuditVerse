@@ -54,16 +54,10 @@ export default defineConfig({
           // Copy data files
           mkdirSync(resolve(__dirname, 'dist/data'), { recursive: true });
 
-          const dataFile = resolve(__dirname, 'src/data/comprehensiveSampleData.json');
+          const dataFile = resolve(__dirname, 'public/data/comprehensiveSampleData.json');
           if (existsSync(dataFile)) {
             copyFileSync(dataFile, resolve(__dirname, 'dist/data/comprehensiveSampleData.json'));
             console.log('comprehensiveSampleData.json copied to dist');
-          }
-
-          const snapshotsFile = resolve(__dirname, 'src/data/historicalSnapshots.json');
-          if (existsSync(snapshotsFile)) {
-            copyFileSync(snapshotsFile, resolve(__dirname, 'dist/data/historicalSnapshots.json'));
-            console.log('historicalSnapshots.json copied to dist');
           }
 
           // Copy public assets (including Auditverse.png)

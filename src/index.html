@@ -1873,6 +1873,72 @@
         <!-- Header -->
         <header class="header">
             <div class="filters-container">
+                <!-- Preset Views Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">Preset Views:</label>
+                    <div class="filter-multiselect">
+                        <div class="filter-selected" id="preset-selected">
+                            <span id="preset-display" class="filter-placeholder">Select a view...</span>
+                        </div>
+                        <div class="filter-dropdown" id="preset-dropdown">
+                            <div class="filter-options-container" id="preset-options-container">
+                                <div class="filter-option" data-value="default">⚪ Default View</div>
+
+                                <!-- Coverage Views -->
+                                <div class="preset-category-header">🔍 Risk Coverage</div>
+                                <div class="filter-option preset-critical" data-value="uncontrolled-risks" title="Risks without any mitigating controls">
+                                    🔴 Uncontrolled Risks
+                                </div>
+                                <div class="filter-option preset-high" data-value="unaudited-risks" title="Risks that have never been audited or lack recent audit coverage">
+                                    🟠 Unaudited Risks
+                                </div>
+                                <div class="filter-option preset-high" data-value="unmonitored-standards" title="Compliance standards without audit coverage">
+                                    🟠 Unmonitored Standards
+                                </div>
+                                <div class="filter-option preset-high" data-value="audit-blind-spots" title="Business units without any audit activity">
+                                    🟠 Audit Blind Spots
+                                </div>
+
+                                <!-- Hotspot Views -->
+                                <div class="preset-category-header">🔥 Risk Hotspots</div>
+                                <div class="filter-option preset-high" data-value="high-issue-risks" title="Risks with the most associated issues">
+                                    🟠 High Issue Risks
+                                </div>
+                                <div class="filter-option preset-high" data-value="high-incident-risks" title="Risks with the most incidents (proven problems)">
+                                    🟠 High Incident Risks
+                                </div>
+                                <div class="filter-option preset-medium" data-value="failed-controls" title="Controls with effectiveness issues">
+                                    🟡 Failed Controls
+                                </div>
+
+                                <!-- Planning Views -->
+                                <div class="preset-category-header">📋 Audit Planning</div>
+                                <div class="filter-option preset-critical" data-value="high-residual-risk" title="Risks that remain high after controls">
+                                    🔴 High Residual Risk
+                                </div>
+
+                                <!-- Compliance Views -->
+                                <div class="preset-category-header">⚖️ Compliance</div>
+                                <div class="filter-option preset-high" data-value="standard-violations" title="Standards with most non-compliance issues">
+                                    🟠 Standard Violations
+                                </div>
+                                <div class="filter-option preset-high" data-value="regulatory-exposure" title="High-severity risks in regulated areas">
+                                    🟠 Regulatory Exposure
+                                </div>
+
+                                <!-- Executive Views -->
+                                <div class="preset-category-header">📊 Executive Dashboard</div>
+                                <div class="filter-option preset-high" data-value="enterprise-risk-profile" title="Top risks by residual rating">
+                                    🟠 Enterprise Risk Profile
+                                </div>
+                                <div class="filter-option preset-high" data-value="audit-universe-coverage" title="Overall coverage metrics">
+                                    🟠 Audit Universe Coverage
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Audits Filter -->
                 <div class="filter-group">
                     <label class="filter-label">Audits:</label>
@@ -1986,74 +2052,6 @@
                         <div class="toggle-checkbox"></div>
                         <span id="risk-mode-label">Residual Risk (with controls)</span>
                     </div>
-                </div>
-                
-                <!-- Preset Views Dropdown -->
-                <div class="view-preset-container filter-group" style="margin-top: 15px; padding: 12px; background: linear-gradient(135deg, #2a2a2f 0%, #323237 100%); border: 2px solid #3a3a3f; border-style: outset; border-radius: 3px;">
-                    <label class="filter-label">📊 Preset Views</label>
-                    <div class="filter-multiselect">
-                        <div class="filter-selected" id="preset-selected">
-                            <span id="preset-display">Select a View...</span>
-                            <span class="filter-arrow">▼</span>
-                        </div>
-                        <div class="filter-dropdown" id="preset-dropdown">
-                            <div class="filter-options-container" id="preset-options-container">
-                                <div class="filter-option" data-value="default">⚪ Default View</div>
-
-                                <!-- Coverage Views -->
-                                <div class="preset-category-header">🔍 Risk Coverage</div>
-                                <div class="filter-option preset-critical" data-value="uncontrolled-risks" title="Risks without any mitigating controls">
-                                    🔴 Uncontrolled Risks
-                                </div>
-                                <div class="filter-option preset-high" data-value="unaudited-risks" title="Risks that have never been audited or lack recent audit coverage">
-                                    🟠 Unaudited Risks
-                                </div>
-                                <div class="filter-option preset-high" data-value="unmonitored-standards" title="Compliance standards without audit coverage">
-                                    🟠 Unmonitored Standards
-                                </div>
-                                <div class="filter-option preset-high" data-value="audit-blind-spots" title="Business units without any audit activity">
-                                    🟠 Audit Blind Spots
-                                </div>
-
-                                <!-- Hotspot Views -->
-                                <div class="preset-category-header">🔥 Risk Hotspots</div>
-                                <div class="filter-option preset-high" data-value="high-issue-risks" title="Risks with the most associated issues">
-                                    🟠 High Issue Risks
-                                </div>
-                                <div class="filter-option preset-high" data-value="high-incident-risks" title="Risks with the most incidents (proven problems)">
-                                    🟠 High Incident Risks
-                                </div>
-                                <div class="filter-option preset-medium" data-value="failed-controls" title="Controls with effectiveness issues">
-                                    🟡 Failed Controls
-                                </div>
-
-                                <!-- Planning Views -->
-                                <div class="preset-category-header">📋 Audit Planning</div>
-                                <div class="filter-option preset-critical" data-value="high-residual-risk" title="Risks that remain high after controls">
-                                    🔴 High Residual Risk
-                                </div>
-
-                                <!-- Compliance Views -->
-                                <div class="preset-category-header">⚖️ Compliance</div>
-                                <div class="filter-option preset-high" data-value="standard-violations" title="Standards with most non-compliance issues">
-                                    🟠 Standard Violations
-                                </div>
-                                <div class="filter-option preset-high" data-value="regulatory-exposure" title="High-severity risks in regulated areas">
-                                    🟠 Regulatory Exposure
-                                </div>
-
-                                <!-- Executive Views -->
-                                <div class="preset-category-header">📊 Executive Dashboard</div>
-                                <div class="filter-option preset-high" data-value="enterprise-risk-profile" title="Top risks by residual rating">
-                                    🟠 Enterprise Risk Profile
-                                </div>
-                                <div class="filter-option preset-high" data-value="audit-universe-coverage" title="Overall coverage metrics">
-                                    🟠 Audit Universe Coverage
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="preset-message" style="margin-top: 8px; font-size: 0.85rem; color: #00ffcc; font-style: italic; min-height: 1.2em;"></div>
                 </div>
             </div>
 
